@@ -1,19 +1,51 @@
 #modal {
-      display: none;
-      position: fixed;
-      top: 30%;
-      left: 50%;
-      transform: translate(-50%, -30%);
-      background: white;
-      border: 1px solid #ccc;
-      padding: 20px;
-      z-index: 1000;
-      box-shadow: 0 0 10px rgba(0,0,0,0.2);
-    }
+  display: none;
+  position: fixed;
+  top: 30%;
+  left: 50%;
+  transform: translate(-50%, -30%);
+  width: 450px;          /* 幅 */
+  height: 500px;         /* 高さ */
+  background: white;
+  border: 1px solid #ccc;
+  padding: 20px;
+  z-index: 1000;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  overflow-y: auto;      /* 内容がはみ出たらスクロール */
+  border-radius: 8px;    /* 角を丸くする optional */
+}
 #overlay {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 999;
-    }
+  display: none;
+  position: fixed;
+  top: 0; 
+  left: 0; 
+  right: 0; 
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 999;
+}
+/* テキストエリアを広げる */
+#modal textarea {
+  width: 90%;
+  box-sizing: border-box;
+  resize: vertical;      /* 高さのみ変更可能 */
+  margin-bottom: 10px;
+}
+
+#preview-img {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+#preview-img img {
+  flex: 1 1 200px; /* 最小幅400px、必要に応じて拡大 */
+  max-width: 400px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+#save,#cancel,#upload{
+  margin-top: 20px;
+}

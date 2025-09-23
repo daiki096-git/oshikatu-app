@@ -18,10 +18,10 @@
     <p id="selected-date"></p>
     <textarea id="title" placeholder="タイトルを入力してください" cols="30"></textarea><br>
     <textarea id="memory-text" rows="5" cols="30" placeholder="メッセージを入力してください"></textarea><br>
+    <div id="preview-img"></div>
     <button id="save">保存</button>
     <button id="cancel">キャンセル</button>
     <input type="file" id="upload" name="files" multiple>
-    <div id="preview-img"></div>
 
   </div>
   <script>
@@ -32,6 +32,10 @@
         initialView: 'dayGridMonth',
         locale: 'ja',
         dateClick: function (info) {
+          const eventExisting=calendar.getEvents().find(e=>e.startStr===info.dateStr)
+          if(eventExisting){
+            return
+          }
           event=null
           document.getElementById("selected-date").textContent = info.dateStr;
           document.getElementById("modal").style.display = "block";
@@ -61,7 +65,7 @@
               allDay: true,
               extendedProps: {
                 memory: ev.memory,
-                imageUrl: ev.image_path,
+                imageUrl: ev.imageUrl,
                 id:ev.id
 
               }
@@ -139,6 +143,7 @@
         document.getElementById("title").value = "";
         document.getElementById("memory-text").value = "";
         document.getElementById("upload").value = "";
+        document.getElementById("preview-img").innerHTML = "";
 
       }
       // 複数画像を表示する関数を追加
@@ -154,8 +159,6 @@
         urls.forEach(url => {
           const img = document.createElement("img");
           img.src = url;
-          img.style.maxWidth = "100px";
-          img.style.margin = "5px";
           container.appendChild(img);
         });
       }
