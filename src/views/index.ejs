@@ -16,7 +16,9 @@
   <div id="overlay"></div>
   <div id="modal">
     <p id="selected-date"></p>
+    <label for="title">タイトル</label>
     <textarea id="title" placeholder="タイトルを入力してください" cols="30"></textarea><br>
+    <label for="title">メッセージ</label>
     <textarea id="memory-text" rows="5" cols="30" placeholder="メッセージを入力してください"></textarea><br>
     <div id="preview-img"></div>
     <button id="save">保存</button>
@@ -135,6 +137,9 @@
         }
       })
       document.getElementById("cancel").addEventListener("click", () => {
+        closeModal();
+      })
+      document.getElementById("overlay").addEventListener("click", () => {
         closeModal();
       })
       function closeModal() {
