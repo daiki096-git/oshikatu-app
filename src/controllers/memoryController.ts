@@ -47,11 +47,8 @@ export const registerMemoryController = async (req: Request, res: Response) => {
 export const fetchMemoryController = async (req: Request, res: Response) => {
   try {
     const memories = await fetchMemoryModel();
-    console.log("aaa")
-
-    // FullCalendar 用にマッピング
     const events = memories.map(memory => ({
-      id: memory.id.toString(),           // FullCalendar の標準 id
+      id: memory.id.toString(),         
       title: memory.title,
       start: memory.date,
       allDay: true,
