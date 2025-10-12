@@ -46,6 +46,11 @@
   border-radius: 4px;
 }
 
-#save,#cancel,#upload{
+#save,#cancel,#upload,#delete,#update{
   margin-top: 20px;
+}
+
+#selected-date,label{
+  text-decoration: underline;
+  font-size:12px;
 }

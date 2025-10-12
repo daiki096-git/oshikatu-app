@@ -7,7 +7,6 @@
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <link rel="stylesheet" href="/css/stylesheet.css">
-
 </head>
 
 <body>
@@ -16,15 +15,18 @@
   <div id="overlay"></div>
   <div id="modal">
     <p id="selected-date"></p>
-    <label for="title">タイトル</label>
-    <textarea id="title" placeholder="タイトルを入力してください" cols="30"></textarea><br>
-    <label for="title">メッセージ</label>
-    <textarea id="memory-text" rows="5" cols="30" placeholder="メッセージを入力してください"></textarea><br>
+    <label for="title">イベント</label>
+    <textarea id="title" placeholder="イベント名を入力してください" cols="30"></textarea><br>
+    <label for="title">コメント</label>
+    <textarea id="memory-text" rows="5" cols="30" placeholder="コメントを入力してください"></textarea><br>
     <div id="preview-img"></div>
-    <button id="save">保存</button>
-    <button id="cancel">キャンセル</button>
-    <input type="file" id="upload" name="files" multiple>
-
+    <div class="upload_file">
+      <input type="file" id="upload" name="files" multiple>
+    </div>
+    <button id="save">登録</button>
+    <button id="update">更新</button>
+    <button id="cancel">閉じる</button>
+    <button id="delete">削除</button>
   </div>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -32,24 +34,32 @@
       const calendarEl = document.getElementById("calendar");
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
+        events: '/api/memory',
         locale: 'ja',
         dateClick: function (info) {
-          const eventExisting=calendar.getEvents().find(e=>e.startStr===info.dateStr)
-          if(eventExisting){
+          const eventExisting = calendar.getEvents().find(e => e.startStr === info.dateStr)
+          if (eventExisting) {
             return
           }
-          event=null
+          event = null
+          document.getElementById("save").style.display="";
+          document.getElementById("update").style.display="none";
           document.getElementById("selected-date").textContent = info.dateStr;
           document.getElementById("modal").style.display = "block";
           document.getElementById("overlay").style.display = "block";
-
-
-
         },
         eventClick: function (info) {
           event = info.event;
           document.getElementById("selected-date").textContent = event.startStr;
           document.getElementById("title").value = event.title;
+          if (!event.title) {
+            document.getElementById("delete").style.display = "none"
+            document.getElementById("update").style.display="none"
+          } else {
+            document.getElementById("delete").style.display = "";
+            document.getElementById("update").style.display=""
+            document.getElementById("save").style.display="none"
+          }
           document.getElementById("memory-text").value = event.extendedProps.memory || "";
           showAllImages(event.extendedProps.imageUrl || []);
 
@@ -57,85 +67,92 @@
           document.getElementById("overlay").style.display = "block";
         }
       })
-      fetch("/api/memory")
-        .then(res => res.json())
-        .then(events => {
-          events.forEach(ev => {
-            calendar.addEvent({
-              title: ev.title,
-              start: ev.date,
-              allDay: true,
-              extendedProps: {
-                memory: ev.memory,
-                imageUrl: ev.imageUrl,
-                id:ev.id
-
-              }
-            });
-          });
-        });
-
-
-
-      document.getElementById("save").addEventListener("click", async () => {
+      const saveButton = document.getElementById("save")
+      const updateButton = document.getElementById("update")
+      saveButton.addEventListener("click",clickButton)
+      updateButton.addEventListener("click",clickButton)
+      async function clickButton() {
         const title = document.getElementById("title").value
-        const date = document.getElementById("selected-date").textContent;
-        const memory = document.getElementById("memory-text").value
-        const files = document.getElementById('upload').files;
-        const formData = new FormData();
-        formData.append("title", title)
-        formData.append("date", date)
-        formData.append("memory", memory)
-        if (files) {
-          for (let i = 0; i < files.length; i++) {
-            formData.append("files", files[i])
-          }
+        if (!title) {
+          alert("イベント名を入力してください")
+          return
         }
-        const existingEvent = calendar.getEvents().find(e => e.startStr === date);
-        // 既存のイベントがある場合は更新、ない場合は新規作成
-        let response
-        if (existingEvent) {
-          response = await fetch('/api/memory', {
-            method: "put",
-            body: formData
-          })
-        }
-        else {
-          response = await fetch("/api/memory", {
-            method: "post",
-            body: formData
-          })
-        }
-        const result = await response.json();
-        if (response.ok) {
-          alert("登録できました")
-          if (existingEvent) {
-            existingEvent.setProp("title", title);
-            existingEvent.setStart(date);
-            existingEvent.setExtendedProp("memory", memory);
-            existingEvent.setExtendedProp("imageUrl", result.imageUrl);
-            existingEvent.setExtendedProp("id", result.id);
+        const save_confirm = confirm("この内容で保存してよろしいですか？元データがある場合、上書きされます。");
+        if (!save_confirm) return;
+        saveButton.disabled = true
+        updateButton.disabled=true
+        try {
 
-
+          const date = document.getElementById("selected-date").textContent;
+          const memory = document.getElementById("memory-text").value
+          const files = document.getElementById('upload').files;
+          const formData = new FormData();
+          formData.append("title", title)
+          formData.append("date", date)
+          formData.append("memory", memory)
+          if (files && files.length > 0) {
+            for (let i = 0; i < files.length; i++) {
+              formData.append("files", files[i])
+            }
           } else {
-            calendar.addEvent({
-              title: title,
-              start: date,
-              allDay: true,
-              extendedProps: {
-                id:result.id,
-                memory: memory,
-                imageUrl: result.imageUrl
-              }
+            formData.append("clearImage", "true")
+          }
+          const existingEvent = event;
+          // 既存のイベントがある場合は更新、ない場合は新規作成
+          let response
+          if (existingEvent) {
+            const id = existingEvent.extendedProps.id;
+            if (!id) {
+              alert("更新できませんでした。再度やり直してください");
+              return;
+            }
+            formData.append("id", id);
+            response = await fetch('/api/memory', {
+              method: "put",
+              body: formData
             })
           }
-          showAllImages(result.imageUrl)
+          else {
+            response = await fetch("/api/memory", {
+              method: "post",
+              body: formData
+            })
+          }
+          const result = await response.json();
+          if (response.ok) {
+            alert(result.message)
+            if (existingEvent) {
+              existingEvent.setProp("title", title);
+              existingEvent.setStart(date);
+              existingEvent.setExtendedProp("memory", memory);
+              existingEvent.setExtendedProp("imageUrl", result.imageUrl);
+            } else {
+              calendar.addEvent({
+                title: title,
+                start: date,
+                allDay: true,
+                extendedProps: {
+                  id: result.id.toString(),
+                  memory: memory,
+                  imageUrl: result.imageUrl
+                }
+              })
+            }
+            showAllImages(result.imageUrl)
+            closeModal();
+          } else {
+            alert("登録できませんでした")
+            closeModal();
+          }
+        } catch (error) {
+
+        } finally {
           closeModal();
-        } else {
-          alert("登録できませんでした")
-          closeModal();
+          calendar.refetchEvents();
+          saveButton.disabled = false;
+          updateButton.disabled=false;
         }
-      })
+      }
       document.getElementById("cancel").addEventListener("click", () => {
         closeModal();
       })
@@ -143,8 +160,9 @@
         closeModal();
       })
       function closeModal() {
-        document.getElementById("modal").style.display = "none"
-        document.getElementById("overlay").style.display = "none"
+        document.getElementById("modal").style.display = "none";
+        document.getElementById("overlay").style.display = "none";
+        document.getElementById("delete").style.display = "none";
         document.getElementById("title").value = "";
         document.getElementById("memory-text").value = "";
         document.getElementById("upload").value = "";
@@ -155,25 +173,46 @@
       function showAllImages(urls) {
         const container = document.getElementById("preview-img");
         container.innerHTML = ""; // 画像をリセット
-
         if (!urls || urls.length === 0) {
           container.textContent = "画像はありません";
           return;
         }
-
         urls.forEach(url => {
           const img = document.createElement("img");
           img.src = url;
           container.appendChild(img);
         });
       }
+      //削除
+      const delete_button = document.getElementById("delete");
+      delete_button.addEventListener("click", async () => {
+        const delete_confrim = confirm("本当に削除してよろしいですか？");
+        if (!delete_confrim) return
+        try {
+          const id = event.extendedProps.id;
+          const formData = new FormData();
+          formData.append("id", id);
+          formData.append("action", "delete")
+          const response = await fetch("/api/memory", {
+            method: "post",
+            body: formData
 
+          })
+          const result = await response.json();
+          if (response.ok) {
+            alert(result.message);
+            closeModal();
+            calendar.refetchEvents();
+          } else {
+            alert("削除に失敗しました")
+          }
+        } catch (error) {
+          alert("サーバとの通信中にエラーが発生しました");
+        }
+      })
 
       calendar.render();
     })
-
-
-
   </script>
 </body>
 

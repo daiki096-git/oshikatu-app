@@ -37,6 +37,22 @@ try{
 }
 
 }
+export const deleteMemoryModel=async(id:string):Promise<void>=>{
+const conn=await connection.getConnection();
+try{
+  await conn.beginTransaction();
+  await conn.execute('delete from memories where id=?',[id]);
+  await conn.execute('delete from memory_images where memory_id=?',[id]) 
+}catch(error){
+    await conn.rollback();
+    throw error
+
+}finally{
+    conn.release();
+}
+
+}
+
 export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
   
     const [rows]=await connection.execute<RowDataPacket[]&MemoryRow[]>('select m.id,m.date,m.title,m.memory,mi.image_path from memories m left join memory_images mi on m.id=mi.memory_id')
@@ -59,4 +75,23 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
 
   return Array.from(memoryMap.values());
 
+}
+
+export const updateMemoryModel=async(memory:string,title:string,date:string,imageUrl:string[],id:string):Promise<boolean>=>{
+const conn=await connection.getConnection();
+try{
+await conn.beginTransaction();
+await conn.execute('UPDATE memories set memory=?,title=?,date=? where id=?',[memory,title,date,id])
+await conn.execute('DELETE FROM memory_images where memory_id=?',[id])
+for(let i=0;i<imageUrl.length;i++){
+await conn.execute('INSERT INTO memory_images (memory_id,image_path) values (?,?)',[id,imageUrl[i]])
+}
+await conn.commit();
+return true;
+}catch(error){
+await conn.rollback();
+throw error;
+}finally{
+conn.release()
+}
 }

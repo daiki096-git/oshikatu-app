@@ -7,6 +7,6 @@ const router=express.Router();
 
 router.post('/',upload.array('files'),registerMemoryController)
 router.get('/',fetchMemoryController)
-router.put('/',updateMemoryController);
+router.put('/',upload.array('files'),updateMemoryController);
 
 export default router
