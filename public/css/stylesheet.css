@@ -54,3 +54,17 @@
   text-decoration: underline;
   font-size:12px;
 }
+.fc-header-toolbar .fc-button {
+  margin-left: 5px;   /* 左に少し余白 */
+  margin-right: 5px;  /* 右に少し余白 */
+}
+
+
+.fc-myCustomButton-button {
+  background-color: rgba(255, 107, 107, 0.6) !important; /* 薄い赤 */
+  color: white !important;
+}
+
+.fc-myCustomButton-button:hover {
+  background-color: rgba(255, 107, 107, 0.8) !important; /* ホバー時は少し濃く */
+}

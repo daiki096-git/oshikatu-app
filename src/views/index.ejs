@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8" />
-  <title>おし活カレンダー</title>
+  <title>推活カレンダー</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
   <link rel="stylesheet" href="/css/stylesheet.css">
@@ -15,9 +15,18 @@
   <div id="overlay"></div>
   <div id="modal">
     <p id="selected-date"></p>
-    <label for="title">イベント</label>
+    <label for="title">種類</label><br>
+    <select name="category" id="category">
+      <option value="" disabled selected>選択してください</option>
+      <option value="live">イベント系</option>
+      <option value="goods">グッズ系</option>
+      <option value="communication">交流系</option>
+      <option value="annivarsary">記念日系</option>
+      <option value="activity">個人活動系</option>
+    </select><br>
+    <label for="title">活動名</label><br>
     <textarea id="title" placeholder="イベント名を入力してください" cols="30"></textarea><br>
-    <label for="title">コメント</label>
+    <label for="title">内容</label><br>
     <textarea id="memory-text" rows="5" cols="30" placeholder="コメントを入力してください"></textarea><br>
     <div id="preview-img"></div>
     <div class="upload_file">
@@ -30,20 +39,39 @@
   </div>
   <script>
     document.addEventListener("DOMContentLoaded", () => {
+      const categoryColorMap = {
+        live: "#FF6B6B",         // イベント系 → 赤
+        goods: "#FFD93D",        // グッズ系 → 黄色
+        communication: "#6BCB77",// 交流系 → 緑
+        annivarsary: "#4D96FF",  // 記念日系 → 青
+        activity: "#9D4EDD"      // 個人活動系 → 紫
+      };
       let event = null;
       const calendarEl = document.getElementById("calendar");
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         events: '/api/memory',
         locale: 'ja',
+        headerToolbar: {
+          left: 'title', // 左側に配置するボタン
+          right: 'myCustomButton,prev,next'// 右側に配置するボタン
+        },
+        customButtons: {
+          myCustomButton: {
+            text: '推活記録', // ボタン文字をTodayの代わりに変更
+            click: function () {
+              window.location.href = '/chart'; // 遷移先URL
+            }
+          }
+        },
         dateClick: function (info) {
           const eventExisting = calendar.getEvents().find(e => e.startStr === info.dateStr)
           if (eventExisting) {
             return
           }
           event = null
-          document.getElementById("save").style.display="";
-          document.getElementById("update").style.display="none";
+          document.getElementById("save").style.display = "";
+          document.getElementById("update").style.display = "none";
           document.getElementById("selected-date").textContent = info.dateStr;
           document.getElementById("modal").style.display = "block";
           document.getElementById("overlay").style.display = "block";
@@ -52,13 +80,14 @@
           event = info.event;
           document.getElementById("selected-date").textContent = event.startStr;
           document.getElementById("title").value = event.title;
+          document.getElementById("category").value = event.extendedProps.category;
           if (!event.title) {
             document.getElementById("delete").style.display = "none"
-            document.getElementById("update").style.display="none"
+            document.getElementById("update").style.display = "none"
           } else {
             document.getElementById("delete").style.display = "";
-            document.getElementById("update").style.display=""
-            document.getElementById("save").style.display="none"
+            document.getElementById("update").style.display = ""
+            document.getElementById("save").style.display = "none"
           }
           document.getElementById("memory-text").value = event.extendedProps.memory || "";
           showAllImages(event.extendedProps.imageUrl || []);
@@ -69,27 +98,34 @@
       })
       const saveButton = document.getElementById("save")
       const updateButton = document.getElementById("update")
-      saveButton.addEventListener("click",clickButton)
-      updateButton.addEventListener("click",clickButton)
+      saveButton.addEventListener("click", clickButton)
+      updateButton.addEventListener("click", clickButton)
       async function clickButton() {
         const title = document.getElementById("title").value
+        const category = document.getElementById("category").value
+        if (!category) {
+          alert("種類を選択してください")
+          return
+        }
         if (!title) {
-          alert("イベント名を入力してください")
+          alert("活動名を入力してください")
           return
         }
         const save_confirm = confirm("この内容で保存してよろしいですか？元データがある場合、上書きされます。");
         if (!save_confirm) return;
         saveButton.disabled = true
-        updateButton.disabled=true
+        updateButton.disabled = true
         try {
 
           const date = document.getElementById("selected-date").textContent;
-          const memory = document.getElementById("memory-text").value
+          const memory = document.getElementById("memory-text").value;
+          const category = document.getElementById("category").value;
           const files = document.getElementById('upload').files;
           const formData = new FormData();
           formData.append("title", title)
           formData.append("date", date)
           formData.append("memory", memory)
+          formData.append("category", category)
           if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
               formData.append("files", files[i])
@@ -125,15 +161,20 @@
               existingEvent.setProp("title", title);
               existingEvent.setStart(date);
               existingEvent.setExtendedProp("memory", memory);
+              existingEvent.setExtendedProp("category", category)
+              //以下は要調整
+              existingEvent.setProp("color", categoryColorMap[category] || "#CCCCCC")
               existingEvent.setExtendedProp("imageUrl", result.imageUrl);
             } else {
               calendar.addEvent({
                 title: title,
                 start: date,
+                color: categoryColorMap[category] || "#CCCCCC",
                 allDay: true,
                 extendedProps: {
                   id: result.id.toString(),
                   memory: memory,
+                  category: category,
                   imageUrl: result.imageUrl
                 }
               })
@@ -150,7 +191,7 @@
           closeModal();
           calendar.refetchEvents();
           saveButton.disabled = false;
-          updateButton.disabled=false;
+          updateButton.disabled = false;
         }
       }
       document.getElementById("cancel").addEventListener("click", () => {
@@ -165,6 +206,7 @@
         document.getElementById("delete").style.display = "none";
         document.getElementById("title").value = "";
         document.getElementById("memory-text").value = "";
+        document.getElementById("category").value = "";
         document.getElementById("upload").value = "";
         document.getElementById("preview-img").innerHTML = "";
 

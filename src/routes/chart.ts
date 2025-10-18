@@ -3,7 +3,7 @@ import express,{Response} from 'express'
 const router=express.Router();
 
 router.get('/',(_req,res: Response)=>{
-    res.render('index')
+    res.render('chart')
 })
 
 export default router

@@ -14,9 +14,10 @@ export const registerMemoryController = async (req: Request, res: Response) => {
             return
             
         }
-        const memory = req.body.memory;
-        const title = req.body.title;
-        const date = req.body.date;
+        const memory:string = req.body.memory;
+        const title:string = req.body.title;
+        const date:string = req.body.date;
+        const category:string=req.body.category;
         const files = req.files as Express.Multer.File[];
         let imageUrl: string[] = []
         if (files && files.length > 0) {
@@ -37,25 +38,27 @@ export const registerMemoryController = async (req: Request, res: Response) => {
                 }
             }
         }
-        await registerMemoryModel(memory, title, date, imageUrl)
+        await registerMemoryModel(memory, title,category, date, imageUrl)
         res.status(201).json({ message: "登録に成功しました", imageUrl: imageUrl })
 
     } catch (error) {
         return res.status(500).json({ message: "サーバーエラーが発生しました" });
     }
 }
-export const fetchMemoryController = async (req: Request, res: Response) => {
+export const fetchMemoryController = async (_req:Request,res: Response) => {
   try {
     const memories = await fetchMemoryModel();
     const events = memories.map(memory => ({
       id: memory.id.toString(),         
       title: memory.title,
       start: memory.date,
+      color:memory.color,
       allDay: true,
       extendedProps: {
         id: memory.id.toString(),
         memory: memory.memory,
-        imageUrl: memory.imageUrl
+        imageUrl: memory.imageUrl,
+        category:memory.category
       }
     }));
 
@@ -69,9 +72,10 @@ export const fetchMemoryController = async (req: Request, res: Response) => {
 export const updateMemoryController = async (req: Request, res: Response) => {
     console.log("updateMemoryController called");
     const id = req.body.id;
-    const memory = req.body.memory;
-    const date = req.body.date;
-    const title = req.body.title;
+    const memory:string = req.body.memory;
+    const date:string = req.body.date;
+    const category:string=req.body.category;
+    const title:string = req.body.title;
     const files = req.files as Express.Multer.File[] | undefined;
     let imageUrl: string[] = []
     let deleteUrl: string[] = []
@@ -101,7 +105,7 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     //S3削除のためにkeyを取得
     const result = await getKeyModel(id);
     //DB更新
-    const updateResult = await updateMemoryModel(memory, title, date, imageUrl, id)
+    const updateResult = await updateMemoryModel(memory, title, date,category, imageUrl, id)
     if (!updateResult) {
         //S3にアップロードしたファイルを削除
         await Promise.all(deleteUrl.map(key =>
