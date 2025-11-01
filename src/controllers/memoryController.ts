@@ -5,30 +5,38 @@ import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
 import { getKeyModel } from "../models/getKeyModel";
 
+type s3UploadParam = {
+
+    Bucket: string,
+    Key: string,
+    Body: Buffer,
+    ContentType: string
+
+}
 export const registerMemoryController = async (req: Request, res: Response) => {
     try {
-        if(req.body.action==="delete"){
-            const id=req.body.id;
+        if (req.body.action === "delete") {
+            const id = req.body.id as string;
             await deleteMemoryModel(id);
-            res.status(201).json({message:"削除に成功しました"})
+            res.status(200).json({ message: "削除に成功しました" })
             return
-            
+
         }
-        const memory:string = req.body.memory;
-        const title:string = req.body.title;
-        const date:string = req.body.date;
-        const category:string=req.body.category;
+        const memory: string = req.body.memory;
+        const title: string = req.body.title;
+        const date: string = req.body.date;
+        const category: string = req.body.category;
         const files = req.files as Express.Multer.File[];
         let imageUrl: string[] = []
         if (files && files.length > 0) {
             for (const file of files) {
                 const ext = path.extname(file.originalname)
                 const fileName = `${Date.now()}_${uuidv4()}${ext}`;
-                const params = {
+                const params :s3UploadParam= {
                     Bucket: process.env.AWS_S3_BUCKET!,
                     Key: fileName,
-                    Body: file?.buffer,
-                    ContentType: file?.mimetype
+                    Body: file.buffer,
+                    ContentType: file.mimetype
                 }
                 try {
                     const result = await s3.upload(params).promise();
@@ -38,44 +46,43 @@ export const registerMemoryController = async (req: Request, res: Response) => {
                 }
             }
         }
-        await registerMemoryModel(memory, title,category, date, imageUrl)
+        await registerMemoryModel(memory, title, category, date, imageUrl)
         res.status(201).json({ message: "登録に成功しました", imageUrl: imageUrl })
 
     } catch (error) {
         return res.status(500).json({ message: "サーバーエラーが発生しました" });
     }
 }
-export const fetchMemoryController = async (_req:Request,res: Response) => {
-  try {
-    const memories = await fetchMemoryModel();
-    const events = memories.map(memory => ({
-      id: memory.id.toString(),         
-      title: memory.title,
-      start: memory.date,
-      color:memory.color,
-      allDay: true,
-      extendedProps: {
-        id: memory.id.toString(),
-        memory: memory.memory,
-        imageUrl: memory.imageUrl,
-        category:memory.category
-      }
-    }));
+export const fetchMemoryController = async (_req: Request, res: Response) => {
+    try {
+        const memories = await fetchMemoryModel();
+        const events = memories.map(memory => ({
+            id: memory.id.toString(),
+            title: memory.title,
+            start: memory.date,
+            color: memory.color,
+            allDay: true,
+            extendedProps: {
+                id: memory.id.toString(),
+                memory: memory.memory,
+                imageUrl: memory.imageUrl,
+                category: memory.category
+            }
+        }));
 
-    res.status(200).json(events);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "サーバーエラーが発生しました" });
-  }
+        res.status(200).json(events);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "サーバーエラーが発生しました" });
+    }
 };
 
 export const updateMemoryController = async (req: Request, res: Response) => {
-    console.log("updateMemoryController called");
-    const id = req.body.id;
-    const memory:string = req.body.memory;
-    const date:string = req.body.date;
-    const category:string=req.body.category;
-    const title:string = req.body.title;
+    const id: string = req.body.id;
+    const memory: string = req.body.memory;
+    const date: string = req.body.date;
+    const category: string = req.body.category;
+    const title: string = req.body.title;
     const files = req.files as Express.Multer.File[] | undefined;
     let imageUrl: string[] = []
     let deleteUrl: string[] = []
@@ -85,11 +92,11 @@ export const updateMemoryController = async (req: Request, res: Response) => {
             const ext = path.extname(file.originalname)
             const fileName = `${Date.now()}_${uuidv4()}${ext}`;
             deleteUrl.push(fileName)
-            const params = {
+            const params:s3UploadParam = {
                 Bucket: process.env.AWS_S3_BUCKET!,
                 Key: fileName,
-                Body: file?.buffer,
-                ContentType: file?.mimetype
+                Body: file.buffer,
+                ContentType: file.mimetype
             }
             try {
                 const result = await s3.upload(params).promise();
@@ -105,7 +112,7 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     //S3削除のためにkeyを取得
     const result = await getKeyModel(id);
     //DB更新
-    const updateResult = await updateMemoryModel(memory, title, date,category, imageUrl, id)
+    const updateResult = await updateMemoryModel(memory, title, date, category, imageUrl, id)
     if (!updateResult) {
         //S3にアップロードしたファイルを削除
         await Promise.all(deleteUrl.map(key =>
@@ -118,6 +125,6 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     await Promise.all(result.map(key =>
         s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
     ))
-    return res.status(201).json({ message: "更新に成功しました",imageUrl:imageUrl})
+    return res.status(201).json({ message: "更新に成功しました", imageUrl: imageUrl })
 
 }

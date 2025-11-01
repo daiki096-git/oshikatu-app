@@ -1,26 +1,101 @@
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <title>円グラフ</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+  <link rel="stylesheet" href="/css/stylesheet.css">
 </head>
+
 <body>
-  <canvas id="myPieChart" width="100" height="100"></canvas>
+  <label for="text">年・月を選択してください</label>
+  <div>
+    <select id="year">
+      <option value="" disabled selected>選択してください</option>
+      <option value="2025">2025年</option>
+      <option value="2026">2026年</option>
+      <option value="2027">2027年</option>
+      <option value="2028">2028年</option>
+      <option value="2029">2029年</option>
+    </select>
+  </div>
+  <div>
+    <select id="month">
+      <option value="" disabled selected>選択してください</option>
+      <option value="1">1月</option>
+      <option value="2">2月</option>
+      <option value="3">3月</option>
+      <option value="4">4月</option>
+      <option value="5">5月</option>
+      <option value="6">6月</option>
+      <option value="7">7月</option>
+      <option value="8">8月</option>
+      <option value="9">9月</option>
+      <option value="10">10月</option>
+      <option value="11">11月</option>
+      <option value="12">12月</option>
+    </select>
+  </div>
+<div class="chart-container">
+  <canvas id="myPieChart"></canvas>
+</div>
   <script>
-    const ctx = document.getElementById('myPieChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'pie',
-      data: {
-        labels: ['カテゴリA', 'カテゴリB', 'カテゴリC'],
-        datasets: [{
-          label: 'カテゴリ別割合',
-          data: [30, 50, 20],
-          backgroundColor: ['#FF6B6B', '#FFD93D', '#6BCB77'],
-          hoverOffset: 4
-        }]
+
+    
+    const month = document.getElementById('month')
+    let currentMonth;
+    month.addEventListener('change', async () => {
+      const selectedYear = document.getElementById('year').value;
+      const selectedMonth = document.getElementById('month').value;
+      try {
+        if (!selectedYear) return alert("年を選択してください")
+        if (!selectedMonth) return alert("月を選択してください")
+        const response = await fetch(`/api/chart?year=${selectedYear}&month=${selectedMonth}`)
+        const data = await response.json();
+        if (response.ok) {
+          const ctx = document.getElementById('myPieChart').getContext('2d');
+          const count=[data[4].count,data[3].count, data[2].count,data[1].count,data[0].count]
+          new Chart(ctx, {
+            type: 'pie',
+            data: {
+              labels: ['イベント系', 'グッズ系', '交流系','記念日系','個人活動系'],
+              datasets: [{
+                label: '割合(%)',
+                data: count,
+                backgroundColor: ["#FF6B6B", "#FFD93D", "#6BCB77","#4D96FF","#9D4EDD"],
+                hoverOffset: 4
+              }]
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+            }
+          });        
+        if(currentMonth!==selectedMonth){
+          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=false;
+        }else{
+          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=true;         
+        }      
+        }else{
+          alert("イベントの登録がありませんでした")  
+          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=true;       
+          return
+        }
+
+      } catch (error) {
+        alert("サーバーエラーが発生しました")
+        throw error;
+
+      }finally{
+         currentMonth=selectedMonth
       }
-    });
+
+    })
+
+
   </script>
 </body>
+
 </html>

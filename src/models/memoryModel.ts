@@ -65,7 +65,7 @@ try{
 
 export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
   
-    const [rows]=await connection.execute<RowDataPacket[]&MemoryRow[]>('select m.id,m.date,m.category,m.title,m.memory,mi.image_path from memories m left join memory_images mi on m.id=mi.memory_id')
+    const [rows]=await connection.execute<RowDataPacket[]>('select m.id,m.date,m.category,m.title,m.memory,mi.image_path from memories m left join memory_images mi on m.id=mi.memory_id')
     const memoryMap = new Map<number, MemoryWithImages>();
 
   for (const row of rows) {
