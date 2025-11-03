@@ -14,8 +14,7 @@ export const fetchChartController = async (req: Request, res: Response) => {
         for (let i = 0; i < data.length; i++) {
             data[i].count = Math.floor(data[i].count / total * 100)
         }
-        console.log(data);
-        res.status(200).json(data)
+        res.status(200).json({data:data,total:total})
     } catch (error) {
         throw error;
     }

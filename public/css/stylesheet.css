@@ -68,3 +68,10 @@
 .fc-myCustomButton-button:hover {
   background-color: rgba(255, 107, 107, 0.8) !important; /* ホバー時は少し濃く */
 }
+
+#oshikatu-percent{
+  text-align: center;
+  font-weight: bold;
+  font-size:20px;
+  margin-bottom:20px
+}

@@ -38,14 +38,17 @@
       <option value="12">12月</option>
     </select>
   </div>
-<div class="chart-container">
-  <canvas id="myPieChart"></canvas>
-</div>
+  <div id="oshikatu-percent">
+  </div>
+  <div class="chart-container">
+    <canvas id="myPieChart"></canvas>
+  </div>
   <script>
 
-    
+
     const month = document.getElementById('month')
     let currentMonth;
+    let myChart=null;
     month.addEventListener('change', async () => {
       const selectedYear = document.getElementById('year').value;
       const selectedMonth = document.getElementById('month').value;
@@ -54,17 +57,21 @@
         if (!selectedMonth) return alert("月を選択してください")
         const response = await fetch(`/api/chart?year=${selectedYear}&month=${selectedMonth}`)
         const data = await response.json();
+       
         if (response.ok) {
           const ctx = document.getElementById('myPieChart').getContext('2d');
-          const count=[data[4].count,data[3].count, data[2].count,data[1].count,data[0].count]
-          new Chart(ctx, {
+          if (myChart) {
+            myChart.destroy();
+          }
+          const count = [data?.data[4]?.count || 0, data?.data[3]?.count || 0, data?.data[2]?.count || 0, data?.data[1]?.count || 0, data?.data[0]?.count || 0]
+          myChart=new Chart(ctx, {
             type: 'pie',
             data: {
-              labels: ['イベント系', 'グッズ系', '交流系','記念日系','個人活動系'],
+              labels: ['イベント系', 'グッズ系', '交流系', '記念日系', '個人活動系'],
               datasets: [{
                 label: '割合(%)',
                 data: count,
-                backgroundColor: ["#FF6B6B", "#FFD93D", "#6BCB77","#4D96FF","#9D4EDD"],
+                backgroundColor: ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#9D4EDD"],
                 hoverOffset: 4
               }]
             },
@@ -72,15 +79,24 @@
               responsive: true,
               maintainAspectRatio: false,
             }
-          });        
-        if(currentMonth!==selectedMonth){
-          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=false;
-        }else{
-          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=true;         
-        }      
-        }else{
-          alert("イベントの登録がありませんでした")  
-          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled=true;       
+          });
+          if (currentMonth !== selectedMonth) {
+            document.querySelector(`#month option[value="${selectedMonth}"]`).disabled = false;
+            const oshikatu = document.getElementById("oshikatu-percent");
+            let oshikatu_percent=Math.ceil((data.total/30)*100)
+            oshikatu.textContent=`${selectedYear}年${selectedMonth}月活動は${data.total}回/月(${oshikatu_percent}%)`
+          } else {
+            document.querySelector(`#month option[value="${selectedMonth}"]`).disabled = true;
+          }
+        } else {
+          alert("イベントの登録がありませんでした")
+          if (myChart) {
+            myChart.destroy();
+            
+          }
+          const oshikatu = document.getElementById("oshikatu-percent");
+          oshikatu.textContent=``
+          document.querySelector(`#month option[value="${selectedMonth}"]`).disabled = true;
           return
         }
 
@@ -88,8 +104,9 @@
         alert("サーバーエラーが発生しました")
         throw error;
 
-      }finally{
-         currentMonth=selectedMonth
+      } finally {
+        currentMonth = selectedMonth
+
       }
 
     })
