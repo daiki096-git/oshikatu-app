@@ -11,14 +11,14 @@ type MemoryWithImages = {
   color:string;
   imageUrl: string[];
 };
-type MemoryRow = {
+/*type MemoryRow = {
   id: number;
   date: string;
   title: string;
   memory: string;
   category:string;
   image_path: string | null;
-};
+};*/
 const categoryColorMap: Record<string, string> = {
   live: "#FF6B6B",
   goods: "#FFD93D",
