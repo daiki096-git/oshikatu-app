@@ -4,7 +4,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: dockerfile
+      dockerfile: dockerfile.devs
     container_name: oshikatu_ap
     ports:
       - "${APP_PORT}:3000"
