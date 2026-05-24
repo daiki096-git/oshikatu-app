@@ -2,16 +2,19 @@ version: '3.9'
 
 services:
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfile.dev
     container_name: oshikatu_ap
     ports:
       - "${APP_PORT}:3000"
     volumes:
-      - ./src:/usr/src/src           # ソースコードだけマウント
-      - ./public:/usr/src/public     # public をマウント
-      - ./.env:/usr/src/.env         # 環境変数
+      - ./src:/usr/src/src           
+      - ./public:/usr/src/public     
+      - ./.env:/usr/src/.env         
       - ./package.json:/usr/src/package.json
       - ./tsconfig.json:/usr/src/tsconfig.json
+    command: npm run dev
     depends_on:
       - db
 
