@@ -51,8 +51,13 @@ export const deleteMemoryModel=async(id:string):Promise<void>=>{
 const conn=await connection.getConnection();
 try{
   await conn.beginTransaction();
-  await conn.execute('delete from memories where id=?',[id]);
+  const [result]=await conn.execute('delete from memories where id=?',[id]);
+  const affectedRow=(result as any).affectedRows
+  if (affectedRow === 0) {
+      throw new Error("データが存在しません");
+  }
   await conn.execute('delete from memory_images where memory_id=?',[id]) 
+  await conn.commit();
 }catch(error){
     await conn.rollback();
     throw error

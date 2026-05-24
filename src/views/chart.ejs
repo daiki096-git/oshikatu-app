@@ -38,13 +38,19 @@
       <option value="12">12月</option>
     </select>
   </div>
+  <div>
+    <button type="button" id="returnButton">前の画面に戻る</button>
+  </div>
   <div id="oshikatu-percent">
   </div>
   <div class="chart-container">
     <canvas id="myPieChart"></canvas>
   </div>
   <script>
-
+    const returnButton=document.getElementById("returnButton");
+      returnButton.addEventListener('click',()=>{
+        window.location.href="/";               
+      })
 
     const month = document.getElementById('month')
     let currentMonth;
@@ -108,7 +114,7 @@
         currentMonth = selectedMonth
 
       }
-
+      
     })
 
 
