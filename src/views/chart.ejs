@@ -93,7 +93,7 @@
             document.querySelector(`#month option[value="${selectedMonth}"]`).disabled = false;
             const oshikatu = document.getElementById("oshikatu-percent");
             let oshikatu_percent=Math.ceil((data.total/30)*100)
-            oshikatu.textContent=`${selectedYear}年${selectedMonth}月活動は${data.total}回/月(${oshikatu_percent}%)`
+            oshikatu.textContent=`${selectedYear}年${selectedMonth}月の推活実績は${data.total}回・${oshikatu_percent}%`
           } else {
             document.querySelector(`#month option[value="${selectedMonth}"]`).disabled = true;
           }
