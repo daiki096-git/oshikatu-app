@@ -41,7 +41,7 @@
 
 #preview-img img {
   flex: 1 1 200px; /* 最小幅400px、必要に応じて拡大 */
-  max-width: 400px;
+  max-width: 100%;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
@@ -71,6 +71,6 @@
 #oshikatu-percent{
   text-align: center;
   font-weight: bold;
-  font-size:20px;
+  font-size:10px;
   margin-bottom:20px
 }
