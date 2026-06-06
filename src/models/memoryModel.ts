@@ -7,6 +7,7 @@ type MemoryWithImages = {
   date: string;
   title: string;
   memory: string;
+  cost: number;
   category:string;
   color:string;
   imageUrl: string[];
@@ -27,11 +28,11 @@ const categoryColorMap: Record<string, string> = {
   activity: "#9D4EDD"
 };
 
-export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,imageUrl:string[]):Promise<void>=>{
+export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,cost:number,imageUrl:string[]):Promise<void>=>{
 const conn=await connection.getConnection()
 try{
     await conn.beginTransaction();
-    const [result]=await conn.execute<ResultSetHeader>('insert into memories (date,memory,title,category) values (?,?,?,?)',[date,memory,title,category])
+    const [result]=await conn.execute<ResultSetHeader>('insert into memories (date,memory,title,category,cost) values (?,?,?,?,?)',[date,memory,title,category,cost])
     const memoryId=result.insertId;
     console.log("aaaaaaa")
     for(const url of imageUrl){
@@ -70,7 +71,7 @@ try{
 
 export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
   
-    const [rows]=await connection.execute<RowDataPacket[]>('select m.id,m.date,m.category,m.title,m.memory,mi.image_path from memories m left join memory_images mi on m.id=mi.memory_id')
+    const [rows]=await connection.execute<RowDataPacket[]>('select m.id,m.date,m.category,m.title,m.memory,m.cost,mi.image_path from memories m left join memory_images mi on m.id=mi.memory_id')
     const memoryMap = new Map<number, MemoryWithImages>();
 
   for (const row of rows) {
@@ -81,6 +82,7 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
         title: row.title,
         memory: row.memory,
         category:row.category,
+        cost: row.cost,
         imageUrl: [],
         color:categoryColorMap[row.category]
       });
@@ -94,11 +96,11 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
 
 }
 
-export const updateMemoryModel=async(memory:string,title:string,date:string,category:string,imageUrl:string[],id:string):Promise<boolean>=>{
+export const updateMemoryModel=async(memory:string,title:string,date:string,cost:number,category:string,imageUrl:string[],id:string):Promise<boolean>=>{
 const conn=await connection.getConnection();
 try{
 await conn.beginTransaction();
-await conn.execute('UPDATE memories set memory=?,title=?,date=?,category=? where id=?',[memory,title,date,category,id])
+await conn.execute('UPDATE memories set memory=?,title=?,date=?,category=?,cost=? where id=?',[memory,title,date,category,cost,id])
 await conn.execute('DELETE FROM memory_images where memory_id=?',[id])
 for(let i=0;i<imageUrl.length;i++){
 await conn.execute('INSERT INTO memory_images (memory_id,image_path) values (?,?)',[id,imageUrl[i]])

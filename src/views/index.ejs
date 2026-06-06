@@ -27,6 +27,8 @@
     </select><br>
     <label for="title">タイトル</label><br>
     <textarea id="title" cols="30"></textarea><br>
+    <label for="cost">使用金額</label><br>
+    <textarea id="cost" cols="30" placeholder="金額を数字のみで入力（例: 10000）"></textarea><br>
     <label for="memory-text">メモ</label><br>
     <textarea id="memory-text" rows="5" cols="30"></textarea><br>
     <div id="preview-img"></div>
@@ -104,9 +106,18 @@
       async function clickButton() {
         const title = document.getElementById("title").value
         const category = document.getElementById("category").value
+        let cost = document.getElementById("cost").value
         if (!category) {
           alert("カテゴリを選択してください")
           return
+        }
+        if (isNaN(cost)) {
+          alert("金額は数字のみで入力してください")
+          return
+        } else {
+          cost = cost.replace(/[０-９]/g, s =>
+          String.fromCharCode(s.charCodeAt(0) - 65248)
+          );
         }
         if (!title) {
           alert("タイトルを入力してください")
@@ -127,6 +138,7 @@
           formData.append("date", date)
           formData.append("memory", memory)
           formData.append("category", category)
+          formData.append("cost",cost)
           if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
               formData.append("files", files[i])

@@ -26,6 +26,7 @@ export const registerMemoryController = async (req: Request, res: Response) => {
         const title: string = req.body.title;
         const date: string = req.body.date;
         const category: string = req.body.category;
+        const cost = req.body.cost;
         const files = req.files as Express.Multer.File[];
         let imageUrl: string[] = []
         if (files && files.length > 0) {
@@ -46,7 +47,7 @@ export const registerMemoryController = async (req: Request, res: Response) => {
                 }
             }
         }
-        await registerMemoryModel(memory, title, category, date, imageUrl)
+        await registerMemoryModel(memory, title, category, date, cost,imageUrl)
         res.status(201).json({ message: "登録に成功しました", imageUrl: imageUrl })
 
     } catch (error) {
@@ -81,6 +82,7 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     const id: string = req.body.id;
     const memory: string = req.body.memory;
     const date: string = req.body.date;
+    const cost = req.body.cost;
     const category: string = req.body.category;
     const title: string = req.body.title;
     const files = req.files as Express.Multer.File[] | undefined;
@@ -112,7 +114,7 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     //S3削除のためにkeyを取得
     const result = await getKeyModel(id);
     //DB更新
-    const updateResult = await updateMemoryModel(memory, title, date, category, imageUrl, id)
+    const updateResult = await updateMemoryModel(memory, title, date, cost, category, imageUrl, id)
     if (!updateResult) {
         //S3にアップロードしたファイルを削除
         await Promise.all(deleteUrl.map(key =>
