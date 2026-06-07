@@ -40,6 +40,7 @@ try{
     }
     await conn.commit();
 }catch(error){
+    console.error(error);
     await conn.rollback();
     throw error
 
