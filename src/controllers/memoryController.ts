@@ -26,7 +26,7 @@ export const registerMemoryController = async (req: Request, res: Response) => {
         const title: string = req.body.title;
         const date: string = req.body.date;
         const category: string = req.body.category;
-        const cost = req.body.cost;
+        const cost: number = Number(req.body.cost);
         const files = req.files as Express.Multer.File[];
         let imageUrl: string[] = []
         if (files && files.length > 0) {
@@ -82,7 +82,7 @@ export const updateMemoryController = async (req: Request, res: Response) => {
     const id: string = req.body.id;
     const memory: string = req.body.memory;
     const date: string = req.body.date;
-    const cost = req.body.cost;
+    const cost: number = Number(req.body.cost);
     const category: string = req.body.category;
     const title: string = req.body.title;
     const files = req.files as Express.Multer.File[] | undefined;
