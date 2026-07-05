@@ -36,6 +36,8 @@ Route
  ↓
 Controller
  ↓
+(場合によってServices)
+ ↓
 Model
  ↓
 MySQL
@@ -58,6 +60,7 @@ View
 * リクエストの受け取り
 * バリデーション
 * Modelの呼び出し
+* Servicesの呼び出し
 * ViewまたはJSONの返却
 
 #### Model
@@ -65,6 +68,12 @@ View
 * SQLのみ記述する
 * データ取得・登録・更新・削除を担当する
 * 複数テーブル更新時はトランザクションを使用する
+
+#### Services
+* memoryControllerファイル経由のみServicesフォルダで分離する
+* Servicesにはビジネスロジックを記載する
+* 今後もビジネスロジックを記載するときはServicesに新規でファイル作成してコードを記載する
+
 
 ---
 

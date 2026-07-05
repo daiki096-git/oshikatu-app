@@ -241,14 +241,9 @@
         if (!delete_confrim) return
         try {
           const id = event.extendedProps.id;
-          const formData = new FormData();
-          formData.append("id", id);
-          formData.append("action", "delete")
-          const response = await fetch("/api/memory", {
-            method: "post",
-            body: formData
-
-          })
+          const response = await fetch(`/api/memory/${id}`, {
+            method: "delete"
+          });
           const result = await response.json();
           if (response.ok) {
             alert(result.message);

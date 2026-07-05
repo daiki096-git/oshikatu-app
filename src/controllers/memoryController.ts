@@ -1,77 +1,50 @@
 import { Request, Response } from "express"
-import { registerMemoryModel, fetchMemoryModel, updateMemoryModel, deleteMemoryModel } from "../models/memoryModel";
-import s3 from "../config/s3"
-import { v4 as uuidv4 } from 'uuid'
-import path from 'path'
-import { getKeyModel } from "../models/getKeyModel";
+import memoryService from "../services/memoryService";
 
-type s3UploadParam = {
-
-    Bucket: string,
-    Key: string,
-    Body: Buffer,
-    ContentType: string
-
-}
 export const registerMemoryController = async (req: Request, res: Response) => {
     try {
-        if (req.body.action === "delete") {
-            const id = req.body.id as string;
-            await deleteMemoryModel(id);
-            res.status(200).json({ message: "削除に成功しました" })
-            return
-
-        }
-        const memory: string = req.body.memory;
-        const title: string = req.body.title;
-        const date: string = req.body.date;
-        const category: string = req.body.category;
-        const cost: number = Number(req.body.cost);
-        const files = req.files as Express.Multer.File[];
-        let imageUrl: string[] = []
-        if (files && files.length > 0) {
-            for (const file of files) {
-                const ext = path.extname(file.originalname)
-                const fileName = `${Date.now()}_${uuidv4()}${ext}`;
-                const params :s3UploadParam= {
-                    Bucket: process.env.AWS_S3_BUCKET!,
-                    Key: fileName,
-                    Body: file.buffer,
-                    ContentType: file.mimetype
-                }
-                try {
-                    const result = await s3.upload(params).promise();
-                    imageUrl.push(result.Location)
-                } catch (error) {
-                    return res.status(500).json({ message: "ファイルのアップロードに失敗しました" });
-                }
-            }
-        }
-        await registerMemoryModel(memory, title, category, date, cost,imageUrl)
-        res.status(201).json({ message: "登録に成功しました", imageUrl: imageUrl })
+        const result=await memoryService.register({
+            memory: req.body.memory,
+            title: req.body.title,
+            date: req.body.date,
+            category: req.body.category,
+            cost: Number(req.body.cost),
+            files: req.files as Express.Multer.File[]
+        })
+        
+        res.status(201).json({ message: "登録に成功しました", imageUrl: result.imageUrl })
 
     } catch (error) {
+        console.error(error);
+         if (error instanceof Error) {
+        switch (error.message) {
+            case "S3_UPLOAD_FAILED":
+                return res.status(500).json({
+                    message: "ファイルのアップロードに失敗しました"
+                });
+
+            case "DB_UPDATE_FAILED":
+                return res.status(500).json({
+                    message: "データベースの更新に失敗しました"
+                });
+        }
+    }
         return res.status(500).json({ message: "サーバーエラーが発生しました" });
     }
 }
+
+export const deleteMemoryController = async (req: Request, res: Response) => {
+    try {
+        await memoryService.delete(req.params.id);
+        res.status(200).json({ message: "削除に成功しました" });
+    } catch (error) {
+        return res.status(500).json({ message: "削除に失敗しました" });
+    }
+}
+    
 export const fetchMemoryController = async (_req: Request, res: Response) => {
     try {
-        const memories = await fetchMemoryModel();
-        const events = memories.map(memory => ({
-            id: memory.id.toString(),
-            title: memory.title,
-            start: memory.date,
-            color: memory.color,
-            allDay: true,
-            extendedProps: {
-                id: memory.id.toString(),
-                cost: memory.cost,
-                memory: memory.memory,
-                imageUrl: memory.imageUrl,
-                category: memory.category
-            }
-        }));
-
+        const events = await memoryService.fetch();
         res.status(200).json(events);
     } catch (error) {
         console.error(error);
@@ -80,54 +53,33 @@ export const fetchMemoryController = async (_req: Request, res: Response) => {
 };
 
 export const updateMemoryController = async (req: Request, res: Response) => {
-    const id: string = req.body.id;
-    const memory: string = req.body.memory;
-    const date: string = req.body.date;
-    const cost: number = Number(req.body.cost);
-    const category: string = req.body.category;
-    const title: string = req.body.title;
-    const files = req.files as Express.Multer.File[] | undefined;
-    let imageUrl: string[] = []
-    let deleteUrl: string[] = []
-    //s3にファイルをアップロード
-    if (files && files.length > 0) {
-        for (const file of files) {
-            const ext = path.extname(file.originalname)
-            const fileName = `${Date.now()}_${uuidv4()}${ext}`;
-            deleteUrl.push(fileName)
-            const params:s3UploadParam = {
-                Bucket: process.env.AWS_S3_BUCKET!,
-                Key: fileName,
-                Body: file.buffer,
-                ContentType: file.mimetype
-            }
-            try {
-                const result = await s3.upload(params).promise();
-                imageUrl.push(result.Location)
-            } catch (error) {
-                await Promise.all(deleteUrl.map(key =>
-                    s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
-                ));
-                return res.status(500).json({ message: "ファイルのアップロードに失敗しました" });
-            }
+    try {
+    const result= await memoryService.update({
+        id: req.body.id,
+        memory: req.body.memory,
+        date: req.body.date,
+        cost: Number(req.body.cost),
+        category: req.body.category,
+        title: req.body.title,
+        files: req.files as Express.Multer.File[]|undefined
+    })
+    return res.status(201).json({ message: "更新に成功しました", imageUrl: result })
+}catch (error) {
+ if (error instanceof Error) {
+        switch (error.message) {
+            case "S3_UPLOAD_FAILED":
+                return res.status(500).json({
+                    message: "ファイルのアップロードに失敗しました"
+                });
+
+            case "DB_UPDATE_FAILED":
+                return res.status(500).json({
+                    message: "更新に失敗しました"
+                });
         }
     }
-    //S3削除のためにkeyを取得
-    const result = await getKeyModel(id);
-    //DB更新
-    const updateResult = await updateMemoryModel(memory, title, date, cost, category, imageUrl, id)
-    if (!updateResult) {
-        //S3にアップロードしたファイルを削除
-        await Promise.all(deleteUrl.map(key =>
-            s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
-        ));
-        return res.status(500).json({ message: "DB更新に失敗しました" })
-    }
-    //s3の既存のファイルを削除
-
-    await Promise.all(result.map(key =>
-        s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
-    ))
-    return res.status(201).json({ message: "更新に成功しました", imageUrl: imageUrl })
+}
+   
+   
 
 }
