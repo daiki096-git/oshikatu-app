@@ -4,31 +4,38 @@
   top: 30%;
   left: 50%;
   transform: translate(-50%, -30%);
-  width: 60%;          /* 幅 */
-  height: 500px;         /* 高さ */
+  width: 60%;
+  /* 幅 */
+  height: 500px;
+  /* 高さ */
   background: white;
   border: 1px solid #ccc;
   padding: 20px;
   z-index: 1000;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  overflow-y: auto;      /* 内容がはみ出たらスクロール */
-  border-radius: 8px;    /* 角を丸くする optional */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  overflow-y: auto;
+  /* 内容がはみ出たらスクロール */
+  border-radius: 8px;
+  /* 角を丸くする optional */
 }
+
 #overlay {
   display: none;
   position: fixed;
-  top: 0; 
-  left: 0; 
-  right: 0; 
+  top: 0;
+  left: 0;
+  right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 999;
 }
+
 /* テキストエリアを広げる */
 #modal textarea {
   width: 90%;
   box-sizing: border-box;
-  resize: vertical;      /* 高さのみ変更可能 */
+  resize: vertical;
+  /* 高さのみ変更可能 */
   margin-bottom: 10px;
 }
 
@@ -40,39 +47,101 @@
 }
 
 #preview-img img {
-  flex: 1 1 200px; /* 最小幅400px、必要に応じて拡大 */
+  flex: 1 1 200px;
+  /* 最小幅400px、必要に応じて拡大 */
   max-width: 100%;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-#save,#cancel,#upload,#delete,#update{
+#save,
+#cancel,
+#upload,
+#delete,
+#update {
   margin-top: 20px;
 }
 
-#selected-date,label{
+#selected-date,
+label {
   text-decoration: underline;
-  font-size:12px;
+  font-size: 12px;
 }
+
 .fc-header-toolbar .fc-button {
-  margin-left: 5px;   /* 左に少し余白 */
-  margin-right: 5px;  /* 右に少し余白 */
+  margin-left: 5px;
+  /* 左に少し余白 */
+  margin-right: 5px;
+  /* 右に少し余白 */
 }
 
-.fc-myCustomButton-button {
-  background-color: rgba(255, 107, 107, 0.6) !important; /* 薄い赤 */
-  color: white !important;
+.fc-toolbar-title {
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #333;
 }
 
-.fc-myCustomButton-button:hover {
-  background-color: rgba(255, 107, 107, 0.8) !important; /* ホバー時は少し濃く */
-}
-
-#oshikatu-percent,#oshikatu-cost{
+#oshikatu-percent,
+#oshikatu-cost {
   text-align: center;
   font-weight: bold;
-  font-size:15px;
-  margin-bottom:10px;
-  margin-top:40px;
-  text-decoration:underline;
+  font-size: 15px;
+  margin-bottom: 10px;
+  margin-top: 40px;
+  text-decoration: underline;
+}
+
+/* タブメニューのスタイル */
+.tab-menu {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  margin: 20px auto;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.tab {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 120px;
+  height: 44px;
+
+  text-decoration: none;
+  color: #666;
+  font-size: 16px;
+  font-weight: 500;
+
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.tab:hover {
+  color: #333;
+}
+
+.tab.active {
+  color: #222;
+  font-weight: 700;
+  border-bottom-color: #4a90e2;
+}
+
+.tab-content {
+  display: none;
+  padding: 20px;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+.card {
+  background: #fff;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }

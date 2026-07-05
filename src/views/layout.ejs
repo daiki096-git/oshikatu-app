@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>推し活管理</title>
+  <link rel="stylesheet" href="/css/stylesheet.css">
+
+
+</head>
+
+
+
+<body>
+
+  <nav class="tab-menu">
+    <a href="/" class="tab <%= currentPage === 'home' ? 'active' : '' %>">
+      ホーム
+    </a>
+
+    <a href="/record" class="tab <%= currentPage === 'record' ? 'active' : '' %>">
+      管理
+    </a>
+
+    <a href="/chart" class="tab <%= currentPage === 'chart' ? 'active' : '' %>">
+      集計
+    </a>
+
+    <a href="/setting" class="tab <%= currentPage === 'setting' ? 'active' : '' %>">
+      設定
+    </a>
+  </nav>
+
+  <main>
+    <%- body %>
+  </main>
+
+</body>
+
+</html>

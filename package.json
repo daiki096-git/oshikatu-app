@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {
-   "build": "tsc && cp -r src/views dist/views",
+    "build": "tsc && cp -r src/views dist/views",
     "start": "node dist/server.js",
     "dev": "ts-node-dev --inspect --respawn --transpile-only src/server.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -25,6 +25,7 @@
     "dotenv": "^17.2.1",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
+    "express-ejs-layouts": "^2.5.1",
     "multer": "^2.0.2",
     "multer-s3": "^3.0.1",
     "mysql2": "^3.14.2",
@@ -36,6 +37,7 @@
     "@types/cors": "^2.8.19",
     "@types/ejs": "^3.1.5",
     "@types/express": "^5.0.3",
+    "@types/express-ejs-layouts": "^2.5.4",
     "@types/multer": "^2.0.0",
     "@types/node": "^24.1.0",
     "@types/uuid": "^10.0.0",

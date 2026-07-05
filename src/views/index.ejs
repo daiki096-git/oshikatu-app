@@ -1,16 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 
-<head>
-  <meta charset="UTF-8" />
-  <title>推活カレンダー</title>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
-  <link rel="stylesheet" href="/css/stylesheet.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
 
-<body>
+
   <div id="calendar"></div>
   <!--モーダル-->
   <div id="overlay"></div>
@@ -54,18 +48,15 @@
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
         events: '/api/memory',
-        locale: 'ja',
+        locale: 'en',
         headerToolbar: {
-          left: 'title', // 左側に配置するボタン
-          right: 'myCustomButton,prev,next'// 右側に配置するボタン
+          start: 'title',
+          center: '',
+          end: 'prev,next'
         },
-        customButtons: {
-          myCustomButton: {
-            text: '推活記録', // ボタン文字をTodayの代わりに変更
-            click: function () {
-              window.location.href = '/chart'; // 遷移先URL
-            }
-          }
+        titleFormat: {
+          year: 'numeric',
+          month: 'long'
         },
         dateClick: function (info) {
           const eventExisting = calendar.getEvents().find(e => e.startStr === info.dateStr)
@@ -84,6 +75,7 @@
           document.getElementById("selected-date").textContent = event.startStr;
           document.getElementById("title").value = event.title;
           document.getElementById("category").value = event.extendedProps.category;
+          document.getElementById("cost").value = event.extendedProps.cost;
           if (!event.title) {
             document.getElementById("delete").style.display = "none"
             document.getElementById("update").style.display = "none"
@@ -132,6 +124,7 @@
           const date = document.getElementById("selected-date").textContent;
           const memory = document.getElementById("memory-text").value;
           const category = document.getElementById("category").value;
+          const cost = document.getElementById("cost").value;
           const files = document.getElementById('upload').files;
           const formData = new FormData();
           formData.append("title", title)
@@ -175,6 +168,7 @@
               existingEvent.setStart(date);
               existingEvent.setExtendedProp("memory", memory);
               existingEvent.setExtendedProp("category", category)
+              existingEvent.setExtendedProp("cost", cost)
               //以下は要調整
               existingEvent.setProp("color", categoryColorMap[category] || "#CCCCCC")
               existingEvent.setExtendedProp("imageUrl", result.imageUrl);
@@ -188,6 +182,7 @@
                   id: result.id.toString(),
                   memory: memory,
                   category: category,
+                  cost: cost,
                   imageUrl: result.imageUrl
                 }
               })
@@ -218,6 +213,7 @@
         document.getElementById("overlay").style.display = "none";
         document.getElementById("delete").style.display = "none";
         document.getElementById("title").value = "";
+        document.getElementById("cost").value = "";
         document.getElementById("memory-text").value = "";
         document.getElementById("category").value = "";
         document.getElementById("upload").value = "";
@@ -269,6 +265,6 @@
       calendar.render();
     })
   </script>
-</body>
+
 
 </html>
