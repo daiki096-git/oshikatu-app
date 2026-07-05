@@ -65,6 +65,7 @@ export const fetchMemoryController = async (_req: Request, res: Response) => {
             allDay: true,
             extendedProps: {
                 id: memory.id.toString(),
+                cost: memory.cost,
                 memory: memory.memory,
                 imageUrl: memory.imageUrl,
                 category: memory.category
