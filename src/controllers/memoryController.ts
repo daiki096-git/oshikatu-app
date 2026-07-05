@@ -38,6 +38,7 @@ export const deleteMemoryController = async (req: Request, res: Response) => {
         await memoryService.delete(req.params.id);
         res.status(200).json({ message: "削除に成功しました" });
     } catch (error) {
+        console.error(error);
         return res.status(500).json({ message: "削除に失敗しました" });
     }
 }
@@ -64,8 +65,9 @@ export const updateMemoryController = async (req: Request, res: Response) => {
         files: req.files as Express.Multer.File[]|undefined
     })
     return res.status(201).json({ message: "更新に成功しました", imageUrl: result })
-}catch (error) {
- if (error instanceof Error) {
+} catch (error) {
+    console.error(error);
+    if (error instanceof Error) {
         switch (error.message) {
             case "S3_UPLOAD_FAILED":
                 return res.status(500).json({
@@ -78,8 +80,6 @@ export const updateMemoryController = async (req: Request, res: Response) => {
                 });
         }
     }
+    return res.status(500).json({ message: "サーバーエラーが発生しました" });
 }
-   
-   
-
 }

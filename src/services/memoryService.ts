@@ -33,33 +33,33 @@ type updateMemoryDto = {
 
 class MemoryService {
     async register(data: registerMemoryDto) {
-        try {
-            let imageUrl: string[] = []
-            if (data.files && data.files.length > 0) {
-                for (const file of data.files) {
-                    const ext = path.extname(file.originalname)
-                    const fileName = `${Date.now()}_${uuidv4()}${ext}`;
-                    const params: s3UploadParam = {
-                        Bucket: process.env.AWS_S3_BUCKET!,
-                        Key: fileName,
-                        Body: file.buffer,
-                        ContentType: file.mimetype
-                    }
-                    try {
-                        const result = await s3.upload(params).promise();
-                        imageUrl.push(result.Location)
-                    } catch (error) {
-                        console.error("ファイルのアップロードに失敗しました", error);
-                        throw new Error("S3_UPLOAD_FAILED");
-                    }
+        let imageUrl: string[] = []
+        if (data.files && data.files.length > 0) {
+            for (const file of data.files) {
+                const ext = path.extname(file.originalname)
+                const fileName = `${Date.now()}_${uuidv4()}${ext}`;
+                const params: s3UploadParam = {
+                    Bucket: process.env.AWS_S3_BUCKET!,
+                    Key: fileName,
+                    Body: file.buffer,
+                    ContentType: file.mimetype
+                }
+                try {
+                    const result = await s3.upload(params).promise();
+                    imageUrl.push(result.Location)
+                } catch (error) {
+                    console.error("ファイルのアップロードに失敗しました", error);
+                    throw new Error("S3_UPLOAD_FAILED");
                 }
             }
+        }
+        try {
             await registerMemoryModel(data.memory, data.title, data.category, data.date, data.cost, imageUrl)
-            return { imageUrl: imageUrl }
         } catch (error) {
             console.error("データベースの更新に失敗しました", error);
             throw new Error("DB_UPDATE_FAILED");
         }
+        return { imageUrl: imageUrl }
     }
     async delete(id: string) {
         await deleteMemoryModel(id);
@@ -102,7 +102,6 @@ class MemoryService {
                 try {
                     const result = await s3.upload(params).promise();
                     imageUrl.push(result.Location)
-                    return imageUrl
                 } catch (error) {
                     await Promise.all(deleteUrl.map(key =>
                         s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
@@ -128,6 +127,7 @@ class MemoryService {
             s3.deleteObject({ Bucket: process.env.AWS_S3_BUCKET!, Key: key }).promise()
         ))
 
+        return imageUrl
     }
 }
 
