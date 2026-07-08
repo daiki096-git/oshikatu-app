@@ -17,7 +17,7 @@
         .then(data => {
           activityTime.textContent = `今月の推し活回数：${data.count}回`;
           totalCost.textContent = `今月の支出：${data.cost.toLocaleString()}円`;
-          if (data.nextEventTitle && data.nextEventDate && data.nextEventTitle !== "次のイベントはありません") {
+          if (data.nextEventTitle && data.nextEventDate) {
             const nextEventDate = new Date(data.nextEventDate);
             const today = new Date();
             const diffTime = nextEventDate.getTime() - today.getTime();

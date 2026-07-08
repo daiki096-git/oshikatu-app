@@ -8,9 +8,9 @@ try{
     const month=date.getMonth()+1;
     const homeData=await fetchHomeModel(year,month);
     //homedata.titleとdateが空の場合の処理
-    const nextEventTitle=homeData?.[1]?.[0]?.title??"次のイベントはありません";
-    const nextEventDate=homeData?.[1]?.[0]?.date??"次のイベントはありません";
-    let count=0;
+    const nextEventTitle=homeData?.[1]?.[0]?.title??null;
+    const nextEventDate=homeData?.[1]?.[0]?.date??null;
+    let count=0;    
     let cost=0;
     for(let i=0;i<homeData[0].length;i++){
         count+=homeData[0][i].count || 0;
