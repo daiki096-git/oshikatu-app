@@ -1,7 +1,7 @@
-import {Request,Response} from 'express';
+import {request,response} from 'express';
 import {fetchHomeModel} from '../models/homeModel'
 
-export const homeController=async(req:Request,res:Response)=>{
+export const homeController=async(req:request,res:response)=>{
 try{
     const date=new Date();
     const year=date.getFullYear();
