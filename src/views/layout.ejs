@@ -5,37 +5,50 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>推し活管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;500;700&family=Noto+Sans+JP:wght@400;500;700&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/css/stylesheet.css">
-
-
 </head>
 
-
-
 <body>
+  <%
+    const headings = {
+      home:    { title: 'おかえりなさい',   sub: '' },
+      record:  { title: '推し活カレンダー', sub: '日付をタップして記録' },
+      chart:   { title: '集計・分析',       sub: '月ごとにふりかえり' },
+      setting: { title: '設定',             sub: 'アカウントと表示' }
+    };
+    const heading = headings[currentPage] || { title: '推し活管理', sub: '' };
+    let headingSub = heading.sub;
+    if (currentPage === 'home') {
+      const now = new Date();
+      headingSub = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
+    }
+  %>
 
-  <nav class="tab-menu">
-    <a href="/" class="tab <%= currentPage === 'home' ? 'active' : '' %>">
-      ホーム
-    </a>
+  <div class="app">
+    <header class="app-head">
+      <div>
+        <div class="app-title"><%= heading.title %></div>
+        <div class="app-sub"><%= headingSub %></div>
+      </div>
+      <div class="avatar"></div>
+    </header>
 
-    <a href="/record" class="tab <%= currentPage === 'record' ? 'active' : '' %>">
-      管理
-    </a>
+    <nav class="tab-menu">
+      <a href="/" class="tab <%= currentPage === 'home' ? 'active' : '' %>">ホーム</a>
+      <a href="/record" class="tab <%= currentPage === 'record' ? 'active' : '' %>">管理</a>
+      <a href="/chart" class="tab <%= currentPage === 'chart' ? 'active' : '' %>">集計</a>
+      <a href="/setting" class="tab <%= currentPage === 'setting' ? 'active' : '' %>">設定</a>
+    </nav>
 
-    <a href="/chart" class="tab <%= currentPage === 'chart' ? 'active' : '' %>">
-      集計
-    </a>
-
-    <a href="/setting" class="tab <%= currentPage === 'setting' ? 'active' : '' %>">
-      設定
-    </a>
-  </nav>
-
-  <main>
-    <%- body %>
-  </main>
-
+    <main>
+      <%- body %>
+    </main>
+  </div>
 </body>
 
 </html>

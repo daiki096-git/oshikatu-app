@@ -1,21 +1,11 @@
-<!DOCTYPE html>
-<html lang="ja">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
-<head>
-  <meta charset="UTF-8">
-  <title>円グラフ</title>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
-  <link rel="stylesheet" href="/css/stylesheet.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-</head>
-
-<body>
 <div id="analyze">
-  <label for="text">年・月を選択してください</label>
+  <label for="month">年・月を選択してください</label>
   <div>
     <select id="year">
-      <option value="" disabled selected>選択してください</option>
+      <option value="" disabled selected>年を選択</option>
       <option value="2025">2025年</option>
       <option value="2026">2026年</option>
       <option value="2027">2027年</option>
@@ -25,7 +15,7 @@
   </div>
   <div>
     <select id="month">
-      <option value="" disabled selected>選択してください</option>
+      <option value="" disabled selected>月を選択</option>
       <option value="1">1月</option>
       <option value="2">2月</option>
       <option value="3">3月</option>
@@ -40,111 +30,116 @@
       <option value="12">12月</option>
     </select>
   </div>
-  <div>
-
-  </div>
 </div>
-  <div id="oshikatu-percent">
-  </div>
+
+<div id="chart-results" hidden>
+  <div id="oshikatu-percent"></div>
   <div class="chart-container">
     <canvas id="myPieChart"></canvas>
   </div>
-  <div id="oshikatu-cost">
-  </div>
+  <div id="oshikatu-cost"></div>
   <div class="chart-container">
     <canvas id="myCostPieChart"></canvas>
   </div>
-  <script>
-    const month = document.getElementById('month')
-    let myChart=null;
-    let myCostChart=null;
-    month.addEventListener('change', async () => {
-      const selectedYear = document.getElementById('year').value;
-      const selectedMonth = document.getElementById('month').value;
-      try {
-        if (!selectedYear) return alert("年を選択してください")
-        if (!selectedMonth) return alert("月を選択してください")
-        const response = await fetch(`/api/chart?year=${selectedYear}&month=${selectedMonth}`)
-        const data = await response.json();
-       
-        if (response.ok) {
-          const ctx = document.getElementById('myPieChart').getContext('2d');
-          const ctx_cost = document.getElementById('myCostPieChart').getContext('2d');
-          if (myChart) {
-            myChart.destroy();
-            myChart=null;
-          }
-          if (myCostChart) {
-            myCostChart.destroy();
-            myCostChart=null;
-          }
-          const count = [data?.data[4]?.count || 0, data?.data[3]?.count || 0, data?.data[2]?.count || 0, data?.data[1]?.count || 0, data?.data[0]?.count || 0]
-          const cost = [data?.data[4]?.cost || 0, data?.data[3]?.cost || 0, data?.data[2]?.cost || 0, data?.data[1]?.cost || 0, data?.data[0]?.cost || 0]
-          myChart=new Chart(ctx, {
-            type: 'pie',
-            data: {
-              labels: ['イベント', 'グッズ', '交流', '記念日', '個人活動'],
-              datasets: [{
-                label: '割合(%)',
-                data: count,
-                backgroundColor: ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#9D4EDD"],
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-            }
-          });
-          myCostChart=new Chart(ctx_cost, {
-            type: 'pie',
-            data: {
-              labels: ['イベント', 'グッズ', '交流', '記念日', '個人活動'],
-              datasets: [{
-                label: '費用(円)',
-                data: cost,
-                backgroundColor: ["#FF6B6B", "#FFD93D", "#6BCB77", "#4D96FF", "#9D4EDD"],
-                hoverOffset: 4
-              }]
-            },
-            options: {
-              responsive: true,
-              maintainAspectRatio: false,
-            }
-          });
-          
-            const oshikatu = document.getElementById("oshikatu-percent");
-            const oshikatu_cost = document.getElementById("oshikatu-cost");
-            const daysInMonth =new Date(selectedYear, selectedMonth, 0).getDate();
-            let oshikatu_percent=Math.ceil((data.total/daysInMonth)*100)
-            oshikatu.textContent=`${selectedYear}年${selectedMonth}月の活動回数：${data.total}回（活動率${oshikatu_percent}%）`
-            oshikatu_cost.textContent=`${selectedYear}年${selectedMonth}月の活動費用：${data.cost_total}円`
-          
-        } else {
-          alert("イベントの登録がありませんでした")
-          if (myChart) {
-            myChart.destroy();
-          }
-          if (myCostChart) {
-            myCostChart.destroy();
-          }
-          const oshikatu = document.getElementById("oshikatu-percent");
-          const oshikatu_cost = document.getElementById("oshikatu-cost");
-          oshikatu.textContent=``
-          oshikatu_cost.textContent=``
-          return
+</div>
+
+<script>
+  const CATEGORY_COLORS = ["#E3A08D", "#E4C67F", "#A9C2A0", "#A9C0D6", "#C3AFD4"];
+  const month = document.getElementById('month')
+  let myChart = null;
+  let myCostChart = null;
+  month.addEventListener('change', async () => {
+    const selectedYear = document.getElementById('year').value;
+    const selectedMonth = document.getElementById('month').value;
+    try {
+      if (!selectedYear) return alert("年を選択してください")
+      if (!selectedMonth) return alert("月を選択してください")
+      const response = await fetch(`/api/chart?year=${selectedYear}&month=${selectedMonth}`)
+      const data = await response.json();
+
+      if (response.ok) {
+        document.getElementById('chart-results').hidden = false;
+        const ctx = document.getElementById('myPieChart').getContext('2d');
+        const ctx_cost = document.getElementById('myCostPieChart').getContext('2d');
+        if (myChart) {
+          myChart.destroy();
+          myChart = null;
         }
+        if (myCostChart) {
+          myCostChart.destroy();
+          myCostChart = null;
+        }
+        const count = [data?.data[4]?.count || 0, data?.data[3]?.count || 0, data?.data[2]?.count || 0, data?.data[1]?.count || 0, data?.data[0]?.count || 0]
+        const cost = [data?.data[4]?.cost || 0, data?.data[3]?.cost || 0, data?.data[2]?.cost || 0, data?.data[1]?.cost || 0, data?.data[0]?.cost || 0]
+        myChart = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['イベント', 'グッズ', '交流', '記念日', '個人活動'],
+            datasets: [{
+              label: '割合(%)',
+              data: count,
+              backgroundColor: CATEGORY_COLORS,
+              borderColor: "#FFFFFF",
+              borderWidth: 2,
+              hoverOffset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '58%',
+            plugins: { legend: { position: 'bottom', labels: { font: { family: "'Zen Maru Gothic', sans-serif" }, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } } }
+          }
+        });
+        myCostChart = new Chart(ctx_cost, {
+          type: 'doughnut',
+          data: {
+            labels: ['イベント', 'グッズ', '交流', '記念日', '個人活動'],
+            datasets: [{
+              label: '費用(円)',
+              data: cost,
+              backgroundColor: CATEGORY_COLORS,
+              borderColor: "#FFFFFF",
+              borderWidth: 2,
+              hoverOffset: 4
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '58%',
+            plugins: { legend: { position: 'bottom', labels: { font: { family: "'Zen Maru Gothic', sans-serif" }, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } } }
+          }
+        });
 
-      } catch (error) {
-        alert("サーバーエラーが発生しました")
-        throw error;
+        const oshikatu = document.getElementById("oshikatu-percent");
+        const oshikatu_cost = document.getElementById("oshikatu-cost");
+        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
+        let oshikatu_percent = Math.ceil((data.total / daysInMonth) * 100)
+        oshikatu.textContent = `${selectedYear}年${selectedMonth}月の活動回数：${data.total}回（活動率${oshikatu_percent}%）`
+        oshikatu_cost.textContent = `${selectedYear}年${selectedMonth}月の活動費用：${data.cost_total}円`
 
-      } 
-      
-    })
+      } else {
+        alert("イベントの登録がありませんでした")
+        if (myChart) {
+          myChart.destroy();
+        }
+        if (myCostChart) {
+          myCostChart.destroy();
+        }
+        const oshikatu = document.getElementById("oshikatu-percent");
+        const oshikatu_cost = document.getElementById("oshikatu-cost");
+        oshikatu.textContent = ``
+        oshikatu_cost.textContent = ``
+        document.getElementById('chart-results').hidden = true;
+        return
+      }
 
+    } catch (error) {
+      alert("サーバーエラーが発生しました")
+      throw error;
 
-  </script>
-</body>
+    }
 
-</html>
+  })
+</script>
