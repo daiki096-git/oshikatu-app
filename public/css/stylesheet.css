@@ -118,7 +118,6 @@ body {
   box-shadow: var(--shadow-soft);
 }
 
-/* ---------- 汎用カード ---------- */
 .card {
   background: var(--card);
   border: 1px solid var(--line);
