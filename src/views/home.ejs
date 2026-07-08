@@ -24,7 +24,7 @@
             const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             nextEvent.textContent = `次のイベント：${data.nextEventTitle}（あと${diffDays}日）`;
           } else {
-            nextEvent.textContent = "次のイベント：データなし";
+            nextEvent.textContent = "次のイベントはありません";
           }
         })
         .catch(err => {
