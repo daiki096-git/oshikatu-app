@@ -1,36 +1,51 @@
+<section class="home">
+  <div class="next-card">
+    <div class="lab">NEXT EVENT ✦ 次のイベント</div>
+    <div class="ev" id="next_event_title">読み込み中…</div>
+    <div class="cd" id="next_event_count"></div>
+  </div>
 
-    <section class="tab-content active" id="home">
-      <div class="card" id="activityTime"></div>
-      <div class="card" id="total_cost"></div>
-      <div class="card" id="next_event"></div>
-    </section>
+  <div class="section-lab">今月のふりかえり</div>
 
-    
+  <div class="stat">
+    <div class="ic coral">🎫</div>
+    <div class="meta"><span>今月の推し活回数</span><strong id="activityTime">—</strong></div>
+  </div>
 
-  <script>
-      document.addEventListener("DOMContentLoaded", () => {
-      const activityTime = document.getElementById("activityTime");
-      const totalCost = document.getElementById("total_cost");
-      const nextEvent = document.getElementById("next_event");
-      const response = fetch('/api/home')
-        .then(res => res.json())
-        .then(data => {
-          activityTime.textContent = `今月の推し活回数：${data.count}回`;
-          totalCost.textContent = `今月の支出：${data.cost.toLocaleString()}円`;
-          if (data.nextEventTitle && data.nextEventDate) {
-            const nextEventDate = new Date(data.nextEventDate);
-            const today = new Date();
-            const diffTime = nextEventDate.getTime() - today.getTime();
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            nextEvent.textContent = `次のイベント：${data.nextEventTitle}（あと${diffDays}日）`;
-          } else {
-            nextEvent.textContent = "次のイベントはありません";
-          }
-        })
-        .catch(err => {
-          console.error('Error fetching activity time:', err);
-          activityTime.textContent = '今月の推し活回数：データ取得エラー';
-          totalCost.textContent = '今月の支出：データ取得エラー';
-        });
-    });
-  </script>
+  <div class="stat">
+    <div class="ic sage">💰</div>
+    <div class="meta"><span>今月の支出</span><strong id="total_cost">—</strong></div>
+  </div>
+</section>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const activityTime = document.getElementById("activityTime");
+    const totalCost = document.getElementById("total_cost");
+    const nextEventTitle = document.getElementById("next_event_title");
+    const nextEventCount = document.getElementById("next_event_count");
+    fetch('/api/home')
+      .then(res => res.json())
+      .then(data => {
+        activityTime.textContent = `${data.count}回`;
+        totalCost.textContent = `¥${data.cost.toLocaleString()}`;
+        if (data.nextEventTitle && data.nextEventDate) {
+          const nextEventDate = new Date(data.nextEventDate);
+          const today = new Date();
+          const diffTime = nextEventDate.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+          nextEventTitle.textContent = `🌸 ${data.nextEventTitle}`;
+          nextEventCount.innerHTML = `あと <b>${diffDays}</b> 日`;
+        } else {
+          nextEventTitle.textContent = "次のイベントはありません";
+          nextEventCount.textContent = "";
+        }
+      })
+      .catch(err => {
+        console.error('Error fetching home data:', err);
+        nextEventTitle.textContent = "データ取得エラー";
+        activityTime.textContent = "エラー";
+        totalCost.textContent = "エラー";
+      });
+  });
+</script>
