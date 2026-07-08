@@ -321,9 +321,6 @@ body {
 /* =========================================================
    集計（Chart.js）
    ========================================================= */
-#analyze {
-  margin-bottom: 8px;
-}
 
 #analyze>label,
 #analyze label {
@@ -338,6 +335,7 @@ body {
 }
 
 #analyze {
+  margin-bottom: 8px;
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
