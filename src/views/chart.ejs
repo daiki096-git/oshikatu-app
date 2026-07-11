@@ -144,19 +144,13 @@
 
   // 年・月どちらを変更しても再取得する
   const handleChange = () => {
-    const selectedYear = year.value;
-    const selectedMonth = month.value;
-    if (!selectedYear) return alert("年を選択してください")
-    if (!selectedMonth) return alert("月を選択してください")
-    loadChart(selectedYear, selectedMonth);
+    loadChart(year.value, month.value);
   }
   year.addEventListener('change', handleChange)
   month.addEventListener('change', handleChange)
 
   // 初期表示：サーバーで選択済みの今年・今月で自動取得する
   window.addEventListener('DOMContentLoaded', () => {
-    const selectedYear = year.value;
-    const selectedMonth = month.value;
-    if (selectedYear && selectedMonth) loadChart(selectedYear, selectedMonth);
+    loadChart(year.value, month.value);
   })
 </script>
