@@ -13,12 +13,6 @@ export const fetchChartController = async (req: Request, res: Response) => {
     try {
         const year = req.query.year as string;
         const month = req.query.month as string;
-        //今日より未来のデータは存在しないため、エラーを返す
-        const today = new Date();
-        const inputDate = new Date(parseInt(year), parseInt(month) - 1);
-        if (inputDate > today) {
-            return res.status(400).json({ message: "未来のデータは存在しません" });
-        }
         const data = await fetchChartModel(year, month);
         console.log(data)
         if(!data || data.length === 0 || data[0].category === null)return res.status(404).json({ message: "データが存在しません" });

@@ -239,7 +239,7 @@ body {
 
 .fc {
   --fc-border-color: transparent;
-  --fc-today-bg-color: #FBEFEA;
+  --fc-today-bg-color: transparent;
   font-family: var(--font-body);
 }
 
@@ -308,6 +308,20 @@ body {
 
 .fc .fc-day-other .fc-daygrid-day-number {
   color: var(--ink-faint);
+}
+
+/* 今日の日付をコーラルの丸バッジで強調 */
+.fc .fc-day-today .fc-daygrid-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: var(--coral);
+  color: #fff;
+  font-weight: 700;
 }
 
 .fc .fc-daygrid-event {
