@@ -6,11 +6,9 @@
   <div>
     <select id="year">
       <option value="" disabled>年を選択</option>
-      <option value="2025" <%= currentYear === 2025 ? 'selected' : '' %>>2025年</option>
-      <option value="2026" <%= currentYear === 2026 ? 'selected' : '' %>>2026年</option>
-      <option value="2027" <%= currentYear === 2027 ? 'selected' : '' %>>2027年</option>
-      <option value="2028" <%= currentYear === 2028 ? 'selected' : '' %>>2028年</option>
-      <option value="2029" <%= currentYear === 2029 ? 'selected' : '' %>>2029年</option>
+      <% for (let y = Math.min(2025, currentYear); y <= currentYear; y++) { %>
+      <option value="<%= y %>" <%= currentYear === y ? 'selected' : '' %>><%= y %>年</option>
+      <% } %>
     </select>
   </div>
   <div>
