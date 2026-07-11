@@ -292,6 +292,12 @@ body {
   padding: 8px 0;
 }
 
+/* 土日の日付セルを強調（ヘッダー・他月セルは対象外） */
+.fc .fc-daygrid-day.fc-day-sat:not(.fc-day-other),
+.fc .fc-daygrid-day.fc-day-sun:not(.fc-day-other) {
+  background-color: rgba(227, 160, 141, .10);
+}
+
 .fc .fc-daygrid-day-number {
   color: var(--ink);
   font-size: 12px;

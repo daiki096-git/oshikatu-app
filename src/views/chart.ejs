@@ -5,32 +5,34 @@
   <label for="month">年・月を選択してください</label>
   <div>
     <select id="year">
-      <option value="" disabled selected>年を選択</option>
-      <option value="2025">2025年</option>
-      <option value="2026">2026年</option>
-      <option value="2027">2027年</option>
-      <option value="2028">2028年</option>
-      <option value="2029">2029年</option>
+      <option value="" disabled>年を選択</option>
+      <option value="2025" <%= currentYear === 2025 ? 'selected' : '' %>>2025年</option>
+      <option value="2026" <%= currentYear === 2026 ? 'selected' : '' %>>2026年</option>
+      <option value="2027" <%= currentYear === 2027 ? 'selected' : '' %>>2027年</option>
+      <option value="2028" <%= currentYear === 2028 ? 'selected' : '' %>>2028年</option>
+      <option value="2029" <%= currentYear === 2029 ? 'selected' : '' %>>2029年</option>
     </select>
   </div>
   <div>
     <select id="month">
-      <option value="" disabled selected>月を選択</option>
-      <option value="1">1月</option>
-      <option value="2">2月</option>
-      <option value="3">3月</option>
-      <option value="4">4月</option>
-      <option value="5">5月</option>
-      <option value="6">6月</option>
-      <option value="7">7月</option>
-      <option value="8">8月</option>
-      <option value="9">9月</option>
-      <option value="10">10月</option>
-      <option value="11">11月</option>
-      <option value="12">12月</option>
+      <option value="" disabled>月を選択</option>
+      <option value="1" <%= currentMonth === 1 ? 'selected' : '' %>>1月</option>
+      <option value="2" <%= currentMonth === 2 ? 'selected' : '' %>>2月</option>
+      <option value="3" <%= currentMonth === 3 ? 'selected' : '' %>>3月</option>
+      <option value="4" <%= currentMonth === 4 ? 'selected' : '' %>>4月</option>
+      <option value="5" <%= currentMonth === 5 ? 'selected' : '' %>>5月</option>
+      <option value="6" <%= currentMonth === 6 ? 'selected' : '' %>>6月</option>
+      <option value="7" <%= currentMonth === 7 ? 'selected' : '' %>>7月</option>
+      <option value="8" <%= currentMonth === 8 ? 'selected' : '' %>>8月</option>
+      <option value="9" <%= currentMonth === 9 ? 'selected' : '' %>>9月</option>
+      <option value="10" <%= currentMonth === 10 ? 'selected' : '' %>>10月</option>
+      <option value="11" <%= currentMonth === 11 ? 'selected' : '' %>>11月</option>
+      <option value="12" <%= currentMonth === 12 ? 'selected' : '' %>>12月</option>
     </select>
   </div>
 </div>
+
+<div id="chart-message"></div>
 
 <div id="chart-results" hidden>
   <div id="oshikatu-percent"></div>
@@ -48,16 +50,15 @@
   const month = document.getElementById('month')
   let myChart = null;
   let myCostChart = null;
-  month.addEventListener('change', async () => {
-    const selectedYear = document.getElementById('year').value;
-    const selectedMonth = document.getElementById('month').value;
+
+  const loadChart = async (selectedYear, selectedMonth) => {
+    const message = document.getElementById('chart-message');
     try {
-      if (!selectedYear) return alert("年を選択してください")
-      if (!selectedMonth) return alert("月を選択してください")
       const response = await fetch(`/api/chart?year=${selectedYear}&month=${selectedMonth}`)
       const data = await response.json();
 
       if (response.ok) {
+        message.textContent = ``;
         document.getElementById('chart-results').hidden = false;
         const ctx = document.getElementById('myPieChart').getContext('2d');
         const ctx_cost = document.getElementById('myCostPieChart').getContext('2d');
@@ -120,18 +121,20 @@
         oshikatu_cost.textContent = `${selectedYear}年${selectedMonth}月の活動費用：${data.cost_total}円`
 
       } else {
-        alert("イベントの登録がありませんでした")
         if (myChart) {
           myChart.destroy();
+          myChart = null;
         }
         if (myCostChart) {
           myCostChart.destroy();
+          myCostChart = null;
         }
         const oshikatu = document.getElementById("oshikatu-percent");
         const oshikatu_cost = document.getElementById("oshikatu-cost");
         oshikatu.textContent = ``
         oshikatu_cost.textContent = ``
         document.getElementById('chart-results').hidden = true;
+        message.textContent = `データがありません`;
         return
       }
 
@@ -140,6 +143,20 @@
       throw error;
 
     }
+  }
 
+  month.addEventListener('change', () => {
+    const selectedYear = document.getElementById('year').value;
+    const selectedMonth = document.getElementById('month').value;
+    if (!selectedYear) return alert("年を選択してください")
+    if (!selectedMonth) return alert("月を選択してください")
+    loadChart(selectedYear, selectedMonth);
+  })
+
+  // 初期表示：サーバーで選択済みの今年・今月で自動取得する
+  window.addEventListener('DOMContentLoaded', () => {
+    const selectedYear = document.getElementById('year').value;
+    const selectedMonth = document.getElementById('month').value;
+    if (selectedYear && selectedMonth) loadChart(selectedYear, selectedMonth);
   })
 </script>

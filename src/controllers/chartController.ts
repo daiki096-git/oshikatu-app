@@ -1,6 +1,14 @@
 import { Request, Response } from "express"
 import { fetchChartModel } from "../models/chartModel";
 
+//集計・分析ページを描画し、プルダウンの初期選択用に現在の年月を渡す
+export const renderChartController = (_req: Request, res: Response) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    res.render('chart', { currentPage: 'chart', currentYear, currentMonth });
+}
+
 export const fetchChartController = async (req: Request, res: Response) => {
     try {
         const year = req.query.year as string;

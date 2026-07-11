@@ -17,15 +17,15 @@
   <%
     const headings = {
       home:    { title: 'おかえりなさい',   sub: '' },
-      record:  { title: '推し活カレンダー', sub: '日付をタップして記録' },
-      chart:   { title: '集計・分析',       sub: '月ごとにふりかえり' },
+      record:  { title: 'カレンダー', sub: '日付をタップして記録' },
+      chart:   { title: '集計',       sub: '月ごとにふりかえり' },
       setting: { title: '設定',             sub: 'アカウントと表示' }
     };
     const heading = headings[currentPage] || { title: '推し活管理', sub: '' };
     let headingSub = heading.sub;
     if (currentPage === 'home') {
       const now = new Date();
-      headingSub = `${now.getFullYear()}年 ${now.getMonth() + 1}月`;
+      headingSub = `${now.getFullYear()}年 ${now.getMonth() + 1}月 ${now.getDate()}日`;
     }
   %>
 
@@ -40,7 +40,7 @@
 
     <nav class="tab-menu">
       <a href="/" class="tab <%= currentPage === 'home' ? 'active' : '' %>">ホーム</a>
-      <a href="/record" class="tab <%= currentPage === 'record' ? 'active' : '' %>">管理</a>
+      <a href="/record" class="tab <%= currentPage === 'record' ? 'active' : '' %>">カレンダー</a>
       <a href="/chart" class="tab <%= currentPage === 'chart' ? 'active' : '' %>">集計</a>
       <a href="/setting" class="tab <%= currentPage === 'setting' ? 'active' : '' %>">設定</a>
     </nav>
