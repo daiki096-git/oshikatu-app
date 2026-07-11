@@ -247,6 +247,14 @@ body {
   margin-bottom: 14px;
 }
 
+/* 矢印と年月タイトルを横一列（< 年月 >）に並べる
+   （titleを含むグループはクラスなしのdivで包まれるため、その内側を横並びにする） */
+.fc .fc-toolbar-chunk > div {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
 .fc-toolbar-title {
   font-family: var(--font-round);
   font-size: 20px !important;
@@ -315,9 +323,11 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
+  /* 通常の数字(padding 6px 8px)と縦横位置を合わせる */
+  margin: 4px 6px;
   border-radius: 50%;
   background-color: var(--coral);
   color: #fff;
