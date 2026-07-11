@@ -239,7 +239,7 @@ body {
 
 .fc {
   --fc-border-color: transparent;
-  --fc-today-bg-color: #FBEFEA;
+  --fc-today-bg-color: transparent;
   font-family: var(--font-body);
 }
 
@@ -292,6 +292,12 @@ body {
   padding: 8px 0;
 }
 
+/* 土日の日付セルを強調（ヘッダー・他月セルは対象外） */
+.fc .fc-daygrid-day.fc-day-sat:not(.fc-day-other),
+.fc .fc-daygrid-day.fc-day-sun:not(.fc-day-other) {
+  background-color: rgba(227, 160, 141, .10);
+}
+
 .fc .fc-daygrid-day-number {
   color: var(--ink);
   font-size: 12px;
@@ -302,6 +308,20 @@ body {
 
 .fc .fc-day-other .fc-daygrid-day-number {
   color: var(--ink-faint);
+}
+
+/* 今日の日付をコーラルの丸バッジで強調 */
+.fc .fc-day-today .fc-daygrid-day-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border-radius: 50%;
+  background-color: var(--coral);
+  color: #fff;
+  font-weight: 700;
 }
 
 .fc .fc-daygrid-event {

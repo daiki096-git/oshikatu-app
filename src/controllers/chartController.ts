@@ -1,16 +1,18 @@
 import { Request, Response } from "express"
 import { fetchChartModel } from "../models/chartModel";
 
+//集計・分析ページを描画し、プルダウンの初期選択用に現在の年月を渡す
+export const renderChartController = (_req: Request, res: Response) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    res.render('chart', { currentPage: 'chart', currentYear, currentMonth });
+}
+
 export const fetchChartController = async (req: Request, res: Response) => {
     try {
         const year = req.query.year as string;
         const month = req.query.month as string;
-        //今日より未来のデータは存在しないため、エラーを返す
-        const today = new Date();
-        const inputDate = new Date(parseInt(year), parseInt(month) - 1);
-        if (inputDate > today) {
-            return res.status(400).json({ message: "未来のデータは存在しません" });
-        }
         const data = await fetchChartModel(year, month);
         console.log(data)
         if(!data || data.length === 0 || data[0].category === null)return res.status(404).json({ message: "データが存在しません" });
