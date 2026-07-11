@@ -43,6 +43,7 @@
 
 <script>
   const CATEGORY_COLORS = ["#E3A08D", "#E4C67F", "#A9C2A0", "#A9C0D6", "#C3AFD4"];
+  const year = document.getElementById('year')
   const month = document.getElementById('month')
   let myChart = null;
   let myCostChart = null;
@@ -141,18 +142,21 @@
     }
   }
 
-  month.addEventListener('change', () => {
-    const selectedYear = document.getElementById('year').value;
-    const selectedMonth = document.getElementById('month').value;
+  // 年・月どちらを変更しても再取得する
+  const handleChange = () => {
+    const selectedYear = year.value;
+    const selectedMonth = month.value;
     if (!selectedYear) return alert("年を選択してください")
     if (!selectedMonth) return alert("月を選択してください")
     loadChart(selectedYear, selectedMonth);
-  })
+  }
+  year.addEventListener('change', handleChange)
+  month.addEventListener('change', handleChange)
 
   // 初期表示：サーバーで選択済みの今年・今月で自動取得する
   window.addEventListener('DOMContentLoaded', () => {
-    const selectedYear = document.getElementById('year').value;
-    const selectedMonth = document.getElementById('month').value;
+    const selectedYear = year.value;
+    const selectedMonth = month.value;
     if (selectedYear && selectedMonth) loadChart(selectedYear, selectedMonth);
   })
 </script>
