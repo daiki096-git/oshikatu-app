@@ -415,6 +415,15 @@ body {
   box-shadow: var(--shadow-soft);
 }
 
+#chart-message:not(:empty) {
+  text-align: center;
+  padding: 48px 16px;
+  font-family: var(--font-round);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink-soft);
+}
+
 /* =========================================================
    設定
    ========================================================= */
