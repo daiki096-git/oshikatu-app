@@ -1,5 +1,6 @@
 import { Request, Response } from "express"
-import { fetchChartModel, fetchYearlyChartModel } from "../models/chartModel";
+import { fetchChartModel, fetchYearlyChartModel, fetchCostByCategoryModel } from "../models/chartModel";
+import { getCostCategoryLabel } from "../config/costCategories";
 
 //集計・分析ページを描画し、プルダウンの初期選択用に現在の年月を渡す
 export const renderChartController = (_req: Request, res: Response) => {
@@ -14,9 +15,8 @@ export const fetchChartController = async (req: Request, res: Response) => {
         const year = req.query.year as string;
         const month = req.query.month as string;
         const data = await fetchChartModel(year, month);
-        console.log(data)
         if(!data || data.length === 0 || data[0].category === null)return res.status(404).json({ message: "データが存在しません" });
-        let total = 0;        
+        let total = 0;
         let cost_total = 0;
         for (let i = 0; i < data.length; i++) {
             total += data[i].count
@@ -29,9 +29,13 @@ export const fetchChartController = async (req: Request, res: Response) => {
         for (let i = 0; i < data.length; i++) {
             data[i].count = Math.floor(data[i].count / total * 100)
         }
-        res.status(200).json({data:data,total:total,cost_total:cost_total})
+        // 費用カテゴリ別ランキング（memory_costs 由来・高い順）。key→日本語ラベルは定数を参照
+        const ranking = await fetchCostByCategoryModel(year, month);
+        const costRanking = ranking.map((r) => ({ category: r.category, label: getCostCategoryLabel(r.category), amount: Number(r.amount) }));
+        res.status(200).json({ data, total, cost_total, costRanking })
     } catch (error) {
-        throw error;
+        console.error("集計データの取得に失敗しました", error);
+        res.status(500).json({ message: "集計データの取得に失敗しました" });
     }
 
 }

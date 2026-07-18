@@ -53,6 +53,8 @@
   <div class="chart-container">
     <canvas id="myCostPieChart"></canvas>
   </div>
+  <div id="cost-ranking-heading">カテゴリ別支出ランキング</div>
+  <ul id="cost-ranking"></ul>
 </div>
 
 <script>
@@ -127,7 +129,21 @@
         const oshikatu = document.getElementById("oshikatu-percent");
         const oshikatu_cost = document.getElementById("oshikatu-cost");
         oshikatu.textContent = `活動回数：${data.total}回`
-        oshikatu_cost.textContent = `活動費用：${data.cost_total}円`
+        oshikatu_cost.textContent = `活動費用：${(data.cost_total || 0).toLocaleString()}円`
+
+        // 費用カテゴリ別ランキング（サーバで高い順に整列済み）。金額はカンマ区切り
+        const rankingEl = document.getElementById('cost-ranking');
+        const rankingHeading = document.getElementById('cost-ranking-heading');
+        const costRanking = data.costRanking || [];
+        // 費用が1件も無い月は見出しごと隠す
+        rankingHeading.hidden = costRanking.length === 0;
+        const rankMedals = ['🥇', '🥈', '🥉'];
+        rankingEl.innerHTML = costRanking
+          .map((r, i) => {
+            const rank = rankMedals[i] || (i + 1);
+            return `<li class="cost-ranking-item"><span class="cost-ranking-left"><span class="cost-ranking-rank">${rank}</span><span class="cost-ranking-label">${r.label}</span></span><span class="cost-ranking-amount">${(r.amount || 0).toLocaleString()}円</span></li>`;
+          })
+          .join('');
 
       } else {
         if (myChart) {
