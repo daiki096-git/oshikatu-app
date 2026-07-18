@@ -439,6 +439,14 @@ body {
   color: var(--ink);
 }
 
+/* 費用入力：カテゴリ選択・金額・追加ボタンを横並びで中央揃え＋間隔 */
+#cost-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 #oshikatu-percent,
 #oshikatu-cost {
   font-family: var(--font-round);
@@ -458,6 +466,61 @@ body {
   border-radius: var(--radius);
   padding: 18px;
   box-shadow: var(--shadow-soft);
+}
+
+#cost-ranking-heading {
+  font-family: var(--font-round);
+  font-weight: 500;
+  font-size: 14px;
+  color: var(--ink-soft);
+  margin-top: 14px;
+}
+
+#cost-ranking {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+#cost-ranking:empty {
+  display: none;
+}
+
+.cost-ranking-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 8px;
+  font-family: var(--font-round);
+  font-size: 14px;
+  color: var(--ink);
+}
+
+.cost-ranking-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.cost-ranking-rank {
+  flex-shrink: 0;
+  width: 24px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cost-ranking-amount {
+  font-weight: 700;
+  color: var(--coral-deep);
 }
 
 #chart-message:not(:empty) {

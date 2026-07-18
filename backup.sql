@@ -79,6 +79,25 @@ LOCK TABLES `memory_images` WRITE;
 INSERT INTO `memory_images` VALUES (1,22,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754193457710_%C3%A6%C2%9C%C2%AC%C3%A6%C2%84%C2%9F%C3%A6%C2%83%C2%B3.txt','2025-08-03 12:57:38'),(2,23,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754194488636_%C3%A7%C2%94%C2%BB%C3%A9%C2%9D%C2%A2%C3%A8%C2%A6%C2%8F%C3%A5%C2%AE%C2%9A%C3%A3%C2%81%C2%AE%C3%A8%C2%A6%C2%B3%C3%A7%C2%82%C2%B9.txt','2025-08-03 13:14:48'),(4,25,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754195048429_3a26fcfc-a7cd-4121-84b1-9a466d1f010c.txt','2025-08-03 13:24:08'),(10,39,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754740736284_41312fe3-f04c-4ad1-a27c-ba33c63d8111.png','2025-08-09 20:58:56'),(11,40,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754740880188_5f0ac7e8-b26f-4d5f-b710-6034c9555175.png','2025-08-09 21:01:20'),(12,41,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754740940106_4eff6550-cf2d-4cf8-8294-6d1f80acbc56.png','2025-08-09 21:02:20'),(13,42,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754740994978_e2367cdd-166a-4584-9228-7c602beaf44c.png','2025-08-09 21:03:15'),(14,43,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754741156860_f9bbe311-28f9-4a3c-ace7-2116f3b1663a.png','2025-08-09 21:05:57'),(15,44,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754742165036_65691161-0a74-4aa6-82a3-5a58cafe4988.png','2025-08-09 21:22:45'),(16,45,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754745675344_91b82eb6-30a7-4c24-bb19-a1632ec7bad8.png','2025-08-09 22:21:15'),(17,46,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754745704545_5d6e3ae6-b53f-40bb-b469-6773866c6124.jpg','2025-08-09 22:21:44'),(18,47,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754745762236_5ba5b23f-1b89-4da0-911e-18376ac9e55d.jpg','2025-08-09 22:22:42'),(21,50,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754832295716_6978e3af-f871-4682-b0fe-2110d7fc4252.png','2025-08-10 22:24:56'),(22,54,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1754833233702_fa12ef5b-f342-4616-afc0-d6ca4c518a58.png','2025-08-10 22:40:34'),(23,55,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1758619162301_8791f73a-fdd5-4ed7-a7e4-c46ba33bd8c5.jpg','2025-09-23 18:19:26'),(24,55,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1758619164140_b20afd22-8359-4ae9-85fa-ffd9f8f14546.jpg','2025-09-23 18:19:26'),(25,55,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1758619165178_0cc5b7c8-8d40-49e8-907a-93bc67e728dd.jpg','2025-09-23 18:19:26'),(28,57,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1758624984985_d5cd3d20-53f9-4485-a43a-33227851e670.jpg','2025-09-23 19:56:26'),(31,56,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1759656616219_763fc879-b250-4158-87a4-ce7c7bfdfa94.jpg','2025-10-05 18:30:24'),(32,56,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1759656619091_2a91219d-43bc-45b0-ae66-764c4fd9f3b5.jpg','2025-10-05 18:30:24'),(64,79,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1760863690134_dc248d32-7a71-4179-a9c4-a7fac82e5c0e.jpg','2025-10-19 17:48:11'),(65,79,'https://myoshikatu.s3.ap-northeast-1.amazonaws.com/1760863690847_b7561543-88b3-4ca9-98d4-1a3e9f8f8ae5.jpg','2025-10-19 17:48:11');
 /*!40000 ALTER TABLE `memory_images` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `memory_costs`
+--
+
+DROP TABLE IF EXISTS `memory_costs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `memory_costs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `memory_id` int NOT NULL,
+  `category` varchar(32) COLLATE utf8mb4_general_ci NOT NULL,
+  `amount` int NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uniq_memory_category` (`memory_id`,`category`),
+  KEY `memory_id` (`memory_id`),
+  CONSTRAINT `memory_costs_ibfk_1` FOREIGN KEY (`memory_id`) REFERENCES `memories` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
