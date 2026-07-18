@@ -2,12 +2,18 @@ import connection from "../config/db"
 import { ResultSetHeader } from "mysql2";
 import { RowDataPacket } from "mysql2";
 
+export type MemoryCost = {
+  category: string;
+  amount: number;
+};
+
 type MemoryWithImages = {
   id: number;
   date: string;
   title: string;
   memory: string;
   cost: number;
+  costs: MemoryCost[];
   category:string;
   color:string;
   imageUrl: string[];
@@ -28,15 +34,19 @@ const categoryColorMap: Record<string, string> = {
   activity: "#9D4EDD"
 };
 
-export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,cost:number,imageUrl:string[]):Promise<void>=>{
+export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,costs:MemoryCost[],imageUrl:string[]):Promise<void>=>{
 const conn=await connection.getConnection()
 try{
     await conn.beginTransaction();
-    const [result]=await conn.execute<ResultSetHeader>('insert into memories (date,memory,title,category,cost) values (?,?,?,?,?)',[date,memory,title,category,cost])
+    // memories.cost は段階的残置。フェーズ2まで集計が cost を参照するため明細の合計を書き込む
+    const total=costs.reduce((sum,c)=>sum+c.amount,0)
+    const [result]=await conn.execute<ResultSetHeader>('insert into memories (date,memory,title,category,cost) values (?,?,?,?,?)',[date,memory,title,category,total])
     const memoryId=result.insertId;
-    console.log("aaaaaaa")
     for(const url of imageUrl){
         await conn.execute('insert into memory_images (memory_id,image_path) values (?,?)',[memoryId,url])
+    }
+    for(const c of costs){
+        await conn.execute('insert into memory_costs (memory_id,category,amount) values (?,?,?)',[memoryId,c.category,c.amount])
     }
     await conn.commit();
 }catch(error){
@@ -84,6 +94,7 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
         memory: row.memory,
         category:row.category,
         cost: row.cost,
+        costs: [],
         imageUrl: [],
         color:categoryColorMap[row.category]
       });
@@ -93,18 +104,32 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
     }
   }
 
+  // 費用明細は別クエリで取得して memory_id で紐付ける
+  // （memory_images との JOIN は画像×費用の直積で行が増えるため避ける）
+  const [costRows]=await connection.execute<RowDataPacket[]>('select memory_id,category,amount from memory_costs')
+  for (const cost of costRows) {
+    memoryMap.get(cost.memory_id)?.costs.push({ category: cost.category, amount: cost.amount });
+  }
+
   return Array.from(memoryMap.values());
 
 }
 
-export const updateMemoryModel=async(memory:string,title:string,date:string,cost:number,category:string,imageUrl:string[],id:string):Promise<boolean>=>{
+export const updateMemoryModel=async(memory:string,title:string,date:string,costs:MemoryCost[],category:string,imageUrl:string[],id:string):Promise<boolean>=>{
 const conn=await connection.getConnection();
 try{
 await conn.beginTransaction();
-await conn.execute('UPDATE memories set memory=?,title=?,date=?,category=?,cost=? where id=?',[memory,title,date,category,cost,id])
+// memories.cost は段階的残置。フェーズ2まで集計が cost を参照するため明細の合計を書き込む
+const total=costs.reduce((sum,c)=>sum+c.amount,0)
+await conn.execute('UPDATE memories set memory=?,title=?,date=?,category=?,cost=? where id=?',[memory,title,date,category,total,id])
 await conn.execute('DELETE FROM memory_images where memory_id=?',[id])
 for(let i=0;i<imageUrl.length;i++){
 await conn.execute('INSERT INTO memory_images (memory_id,image_path) values (?,?)',[id,imageUrl[i]])
+}
+// 費用明細は全削除→再挿入（画像と同じパターン）
+await conn.execute('DELETE FROM memory_costs where memory_id=?',[id])
+for(const c of costs){
+await conn.execute('INSERT INTO memory_costs (memory_id,category,amount) values (?,?,?)',[id,c.category,c.amount])
 }
 await conn.commit();
 return true;

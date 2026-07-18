@@ -17,8 +17,19 @@
     </select><br>
     <label for="title">タイトル</label><br>
     <textarea id="title" cols="30"></textarea><br>
-    <label for="cost">使用金額</label><br>
-    <textarea id="cost" cols="30" placeholder="金額を数字のみで入力（例: 10000）"></textarea><br>
+    <label>費用</label><br>
+    <div id="cost-input-row">
+      <select id="cost-category">
+        <option value="" disabled selected>選択してください</option>
+        <% costCategories.forEach(function (c) { %>
+        <option value="<%= c.key %>"><%= c.label %></option>
+        <% }); %>
+      </select>
+      <input type="text" id="cost-amount" placeholder="金額（例: 5000）">
+      <button type="button" id="cost-add">＋費用を追加</button>
+    </div>
+    <ul id="cost-list"></ul>
+    <p id="cost-total">合計: 0円</p>
     <label for="memory-text">メモ</label><br>
     <textarea id="memory-text" rows="5" cols="30"></textarea><br>
     <div id="preview-img"></div>
@@ -40,6 +51,86 @@
         activity: "#C3AFD4"      // 個人活動系 → ラベンダー
       };
       let event = null;
+      // サーバの費用カテゴリ定数を共有（プルダウン・ラベル表示・クライアント検証で使用）
+      const COST_CATEGORIES = <%- JSON.stringify(costCategories) %>;
+      const costCategoryLabelMap = {};
+      COST_CATEGORIES.forEach(c => { costCategoryLabelMap[c.key] = c.label; });
+      const MAX_COST_AMOUNT = 9999999;
+      // モーダルで編集中の費用明細（保存方式A：クライアント保持→保存時に一括送信）
+      let costs = [];
+
+      // 全角数字を半角へ正規化する
+      function toHalfWidth(value) {
+        return value.replace(/[０-９]/g, s => String.fromCharCode(s.charCodeAt(0) - 65248));
+      }
+      // 費用明細一覧と合計を再描画する
+      function renderCosts() {
+        const list = document.getElementById("cost-list");
+        list.innerHTML = "";
+        let total = 0;
+        costs.forEach((c, index) => {
+          total += c.amount;
+          const li = document.createElement("li");
+          const label = costCategoryLabelMap[c.category] || c.category;
+          const text = document.createElement("span");
+          text.textContent = `${label} ${c.amount.toLocaleString()}円 `;
+          const editBtn = document.createElement("button");
+          editBtn.type = "button";
+          editBtn.textContent = "✏️";
+          editBtn.addEventListener("click", () => editCost(index));
+          const deleteBtn = document.createElement("button");
+          deleteBtn.type = "button";
+          deleteBtn.textContent = "🗑️";
+          deleteBtn.addEventListener("click", () => deleteCost(index));
+          li.appendChild(text);
+          li.appendChild(editBtn);
+          li.appendChild(deleteBtn);
+          list.appendChild(li);
+        });
+        document.getElementById("cost-total").textContent = `合計: ${total.toLocaleString()}円`;
+      }
+      // 明細を追加する（重複・非数値・範囲をクライアント側でも検証）
+      function addCost() {
+        const categorySelect = document.getElementById("cost-category");
+        const amountInput = document.getElementById("cost-amount");
+        const category = categorySelect.value;
+        const amountRaw = toHalfWidth(amountInput.value.trim());
+        if (!category) {
+          alert("費用カテゴリを選択してください");
+          return;
+        }
+        if (amountRaw === "" || !/^\d+$/.test(amountRaw)) {
+          alert("金額は数字のみで入力してください");
+          return;
+        }
+        const amount = Number(amountRaw);
+        if (amount <= 0 || amount > MAX_COST_AMOUNT) {
+          alert("金額は1以上" + MAX_COST_AMOUNT.toLocaleString() + "円以下で入力してください");
+          return;
+        }
+        if (costs.some(c => c.category === category)) {
+          alert("同じ費用カテゴリは追加できません");
+          return;
+        }
+        costs.push({ category, amount });
+        categorySelect.value = "";
+        amountInput.value = "";
+        renderCosts();
+      }
+      // 明細を入力欄に戻して一覧から外す（保存時に再確定）
+      function editCost(index) {
+        const target = costs[index];
+        document.getElementById("cost-category").value = target.category;
+        document.getElementById("cost-amount").value = target.amount;
+        costs.splice(index, 1);
+        renderCosts();
+      }
+      // 明細を一覧から除去する
+      function deleteCost(index) {
+        costs.splice(index, 1);
+        renderCosts();
+      }
+
       const calendarEl = document.getElementById("calendar");
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -60,6 +151,8 @@
             return
           }
           event = null
+          costs = [];
+          renderCosts();
           document.getElementById("save").style.display = "";
           document.getElementById("update").style.display = "none";
           document.getElementById("selected-date").textContent = info.dateStr;
@@ -71,7 +164,9 @@
           document.getElementById("selected-date").textContent = event.startStr;
           document.getElementById("title").value = event.title;
           document.getElementById("category").value = event.extendedProps.category;
-          document.getElementById("cost").value = event.extendedProps.cost;
+          // 登録済みの費用明細を復元表示
+          costs = (event.extendedProps.costs || []).map(c => ({ category: c.category, amount: c.amount }));
+          renderCosts();
           if (!event.title) {
             document.getElementById("delete").style.display = "none"
             document.getElementById("update").style.display = "none"
@@ -91,24 +186,21 @@
       const updateButton = document.getElementById("update")
       saveButton.addEventListener("click", clickButton)
       updateButton.addEventListener("click", clickButton)
+      document.getElementById("cost-add").addEventListener("click", addCost)
       async function clickButton() {
         const title = document.getElementById("title").value
         const category = document.getElementById("category").value
-        let cost = document.getElementById("cost").value
         if (!category) {
           alert("カテゴリを選択してください")
           return
         }
-        if (isNaN(cost)) {
-          alert("金額は数字のみで入力してください")
-          return
-        } else {
-          cost = cost.replace(/[０-９]/g, s =>
-          String.fromCharCode(s.charCodeAt(0) - 65248)
-          );
-        }
         if (!title) {
           alert("タイトルを入力してください")
+          return
+        }
+        // 費用の入力欄に未追加の金額が残っている場合は、押し忘れとみなして保存を止める
+        if (document.getElementById("cost-amount").value.trim() !== "") {
+          alert("追加していない費用があります。「＋費用を追加」を押すか、金額の入力を消してから保存してください")
           return
         }
         const save_confirm = confirm("この内容で保存してよろしいですか？元データがある場合、上書きされます。");
@@ -120,14 +212,13 @@
           const date = document.getElementById("selected-date").textContent;
           const memory = document.getElementById("memory-text").value;
           const category = document.getElementById("category").value;
-          const cost = document.getElementById("cost").value;
           const files = document.getElementById('upload').files;
           const formData = new FormData();
           formData.append("title", title)
           formData.append("date", date)
           formData.append("memory", memory)
           formData.append("category", category)
-          formData.append("cost",cost)
+          formData.append("costs", JSON.stringify(costs))
           if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
               formData.append("files", files[i])
@@ -164,7 +255,7 @@
               existingEvent.setStart(date);
               existingEvent.setExtendedProp("memory", memory);
               existingEvent.setExtendedProp("category", category)
-              existingEvent.setExtendedProp("cost", cost)
+              existingEvent.setExtendedProp("costs", costs)
               //以下は要調整
               existingEvent.setProp("color", categoryColorMap[category] || "#CCCCCC")
               existingEvent.setExtendedProp("imageUrl", result.imageUrl);
@@ -178,7 +269,7 @@
                   id: result.id.toString(),
                   memory: memory,
                   category: category,
-                  cost: cost,
+                  costs: costs,
                   imageUrl: result.imageUrl
                 }
               })
@@ -209,11 +300,14 @@
         document.getElementById("overlay").style.display = "none";
         document.getElementById("delete").style.display = "none";
         document.getElementById("title").value = "";
-        document.getElementById("cost").value = "";
         document.getElementById("memory-text").value = "";
         document.getElementById("category").value = "";
         document.getElementById("upload").value = "";
         document.getElementById("preview-img").innerHTML = "";
+        costs = [];
+        document.getElementById("cost-category").value = "";
+        document.getElementById("cost-amount").value = "";
+        renderCosts();
 
       }
       // 複数画像を表示する関数を追加
