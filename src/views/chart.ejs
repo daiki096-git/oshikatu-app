@@ -1,6 +1,20 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
+<div id="yearly-summary">
+  <div id="yearly-heading"></div>
+  <div class="summary-cards">
+    <div class="summary-card">
+      <div class="summary-card-title">活動回数</div>
+      <div class="summary-card-value" id="yearly-count">0回</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-card-title">合計費用</div>
+      <div class="summary-card-value" id="yearly-cost">0円</div>
+    </div>
+  </div>
+</div>
+
 <div id="analyze">
   <label for="month">年・月を選択してください</label>
   <div>
@@ -109,13 +123,11 @@
             plugins: { legend: { position: 'bottom', labels: { font: { family: "'Zen Maru Gothic', sans-serif" }, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } } }
           }
         });
-
+      
         const oshikatu = document.getElementById("oshikatu-percent");
         const oshikatu_cost = document.getElementById("oshikatu-cost");
-        const daysInMonth = new Date(selectedYear, selectedMonth, 0).getDate();
-        let oshikatu_percent = Math.ceil((data.total / daysInMonth) * 100)
-        oshikatu.textContent = `${selectedYear}年${selectedMonth}月の活動回数：${data.total}回（活動率${oshikatu_percent}%）`
-        oshikatu_cost.textContent = `${selectedYear}年${selectedMonth}月の活動費用：${data.cost_total}円`
+        oshikatu.textContent = `活動回数：${data.total}回`
+        oshikatu_cost.textContent = `活動費用：${data.cost_total}円`
 
       } else {
         if (myChart) {
@@ -138,15 +150,42 @@
     }
   }
 
+  // 年間サマリー（月に依存しないため月別とは別に取得する）
+  const loadYearly = async (selectedYear) => {
+    const heading = document.getElementById('yearly-heading');
+    const countEl = document.getElementById('yearly-count');
+    const costEl = document.getElementById('yearly-cost');
+    heading.textContent = `${selectedYear}年の活動実績`;
+    try {
+      const response = await fetch(`/api/chart/yearly?year=${selectedYear}`)
+      const data = await response.json();
+      if (response.ok) {
+        countEl.textContent = `${(data.yearCount || 0).toLocaleString()}回`;
+        costEl.textContent = `${(data.yearCostTotal || 0).toLocaleString()}円`;
+      } else {
+        // 年間の取得失敗時は0表示にとどめ、月別表示は巻き込まない
+        countEl.textContent = `0回`;
+        costEl.textContent = `0円`;
+      }
+    } catch (error) {
+      console.error(error);
+      countEl.textContent = `0回`;
+      costEl.textContent = `0円`;
+    }
+  }
+
   // 年・月どちらを変更しても再取得する
   const handleChange = () => {
     loadChart(year.value, month.value);
   }
   year.addEventListener('change', handleChange)
   month.addEventListener('change', handleChange)
+  // 年間サマリーは年の変更時のみ更新（月には依存しない）
+  year.addEventListener('change', () => loadYearly(year.value))
 
   // 初期表示：サーバーで選択済みの今年・今月で自動取得する
   window.addEventListener('DOMContentLoaded', () => {
     loadChart(year.value, month.value);
+    loadYearly(year.value);
   })
 </script>
