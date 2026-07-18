@@ -44,7 +44,7 @@ $ARGUMENTS
 
 reviewer 指摘が無くなり実装が固まったら、以下を進める。**各 git 操作（commit / push / PR作成 / 修正の push）は実行前にユーザーへ確認する。**
 
-7. **コミット案を提示して確認**：日本語のコミットメッセージ案（要点の箇条書き）を示し、了承後に `git add -A && git commit`。メッセージ末尾に `Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>` を付ける。
+7. **コミット案を提示して確認**：日本語のコミットメッセージ案（要点の箇条書き）を示し、了承後に `git add -A && git commit`。メッセージ末尾に共同作者表記を付ける。**モデル名は固定せず、コミット時に実行中のモデル名を用いる**（例：`Co-Authored-By: Claude <実行中のモデル名> <noreply@anthropic.com>`）。
 8. **push を確認して実行**：`git push -u origin <ブランチ名>`。
 9. **PR を作成**：`gh pr create --base main --head <ブランチ名>` でタイトル・本文（変更概要・確認方法）を付けて作成。作成後、PRのURLをユーザーに伝える。
 10. **GitHub上のレビュー（Claude等）の指摘に対応**：
