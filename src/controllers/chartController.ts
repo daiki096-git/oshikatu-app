@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { fetchChartModel } from "../models/chartModel";
+import { fetchChartModel, fetchYearlyChartModel } from "../models/chartModel";
 
 //集計・分析ページを描画し、プルダウンの初期選択用に現在の年月を渡す
 export const renderChartController = (_req: Request, res: Response) => {
@@ -34,4 +34,19 @@ export const fetchChartController = async (req: Request, res: Response) => {
         throw error;
     }
 
+}
+
+//選択年の年間集計（活動回数・合計費用）をJSONで返す。月に依存しないため月別とは分離
+export const fetchYearlyChartController = async (req: Request, res: Response) => {
+    try {
+        const year = req.query.year as string;
+        const data = await fetchYearlyChartModel(year);
+        const yearCount = data[0]?.count ?? 0;
+        //SUM(cost)はmysql2から文字列で返るため数値化する。0件時はNULL→0に整形
+        const yearCostTotal = Number(data[0]?.cost ?? 0);
+        res.status(200).json({ yearCount, yearCostTotal });
+    } catch (error) {
+        console.error("年間集計の取得に失敗しました", error);
+        res.status(500).json({ message: "年間集計の取得に失敗しました" });
+    }
 }
