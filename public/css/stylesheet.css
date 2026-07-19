@@ -351,33 +351,84 @@ body {
    集計（Chart.js）
    ========================================================= */
 
-#analyze>label,
-#analyze label {
+/* ゾーン：年で見るエリア／月で見るエリアを見出し＋うっすら背景で仕切る */
+.zone {
+  border-radius: var(--radius);
+  padding: 18px 16px 16px;
+  border: 1px solid var(--line);
+}
+
+.zone.year {
+  background: rgba(169, 192, 214, .12);
+  border-color: rgba(169, 192, 214, .35);
+}
+
+.zone.month {
+  margin-top: 26px;
+  background: rgba(227, 160, 141, .10);
+  border-color: rgba(227, 160, 141, .32);
+}
+
+.zone-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.zone-ic {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.zone-ic.blue {
+  background: #DCE6EF;
+}
+
+.zone-ic.coral {
+  background: #F7E3DC;
+}
+
+.zone-head-text {
+  min-width: 0;
+}
+
+.zone-title {
   font-family: var(--font-round);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--ink);
-  text-decoration: none;
-  display: block;
-  flex-basis: 100%;
-  margin: 0 4px 10px;
 }
 
-#analyze {
-  margin-bottom: 8px;
+.zone-sub {
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+
+.zone-select {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-end;
+  align-items: center;
   gap: 10px;
+  margin-bottom: 14px;
 }
 
-#analyze>div {
+.zone-select label {
+  font-family: var(--font-round);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+  flex-shrink: 0;
+}
+
+.zone-select select {
   flex: 1;
   min-width: 120px;
-}
-
-#analyze select {
-  width: 100%;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -397,16 +448,21 @@ body {
 #yearly-summary {
   margin-bottom: 22px;
   padding: 4px 16px 16px;
-  background: rgba(195, 175, 212, .1);
+  /* 年ゾーン（青み）の上に乗るので、淡ラベンダーだと色が重なって濁る。白系カードで軽く浮かせる */
+  background: rgba(255, 255, 255, .55);
   border-radius: var(--radius);
 }
 
-#yearly-heading {
+#yearly-heading,
+.monthly-heading {
   font-family: var(--font-round);
   font-weight: 700;
   font-size: 15px;
   color: var(--ink);
   text-align: left;
+}
+
+#yearly-heading {
   margin: 18px 4px 12px;
 }
 
@@ -455,6 +511,11 @@ body {
   color: var(--ink-soft);
   text-align: left;
   text-decoration: none;
+  margin: 26px 4px 12px;
+}
+
+/* 月別棒グラフの見出し。共通スタイルは #yearly-heading とまとめ、余白のみ個別指定 */
+.monthly-heading {
   margin: 26px 4px 12px;
 }
 
@@ -523,13 +584,19 @@ body {
   color: var(--coral-deep);
 }
 
-#chart-message:not(:empty) {
+#chart-message:not(:empty),
+#monthly-message:not(:empty) {
   text-align: center;
   padding: 48px 16px;
   font-family: var(--font-round);
   font-weight: 700;
   font-size: 15px;
   color: var(--ink-soft);
+}
+
+/* 空のときは余白を出さない（メッセージ要素が場所を取らないように） */
+#monthly-message {
+  margin: 0;
 }
 
 /* =========================================================

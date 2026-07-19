@@ -36,6 +36,40 @@ export const fetchYearlyChartModel=async(year:string):Promise<yearlySummary[]>=>
     return [{ count, cost }];
 }
 
+//月別棒グラフ用の型（1〜12月ぶんを0埋めして返す）
+type monthlyChart={
+    month:number,
+    count:number,
+    cost:number
+}
+
+//指定年の月ごと活動回数・費用を1〜12月ぶん返す。無い月はcount:0/cost:0で0埋め
+export const fetchMonthlyChartModel=async(year:string):Promise<monthlyChart[]>=>{
+    // 回数は memories、費用は memory_costs.amount 由来へ切替（JOINによる回数の水増しを避けるため別クエリ）
+    // 2クエリは独立しているため Promise.all で並列発行してレイテンシを抑える
+    const [[countRows],[costRows]]=await Promise.all([
+        connection.execute('select MONTH(date) as month, COUNT(*) as count from memories where YEAR(date)=? AND date <= CURDATE() group by MONTH(date)',[year]),
+        connection.execute('select MONTH(m.date) as month, sum(mc.amount) as cost from memory_costs mc join memories m on mc.memory_id = m.id where YEAR(m.date)=? AND m.date <= CURDATE() group by MONTH(m.date)',[year])
+    ])
+    const counts=countRows as { month:number, count:number }[];
+    const costs=costRows as { month:number, cost:string }[];
+    const countMap=new Map<number, number>();
+    for(const c of counts){
+        countMap.set(c.month, c.count);
+    }
+    const costMap=new Map<number, string>();
+    for(const c of costs){
+        costMap.set(c.month, c.cost);
+    }
+    // SQLは活動のある月しか返さないため、1〜12月をループして無い月は0埋めする
+    const result:monthlyChart[]=[];
+    for(let m=1;m<=12;m++){
+        // SUM(amount)はmysql2から文字列で返るためNum()で数値化する
+        result.push({ month: m, count: countMap.get(m) ?? 0, cost: Number(costMap.get(m) ?? 0) });
+    }
+    return result;
+}
+
 //費用カテゴリ別ランキング用の型
 type costByCategory={
     category:string,

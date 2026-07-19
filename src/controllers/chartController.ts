@@ -1,5 +1,5 @@
 import { Request, Response } from "express"
-import { fetchChartModel, fetchYearlyChartModel, fetchCostByCategoryModel } from "../models/chartModel";
+import { fetchChartModel, fetchYearlyChartModel, fetchMonthlyChartModel, fetchCostByCategoryModel } from "../models/chartModel";
 import { getCostCategoryLabel } from "../config/costCategories";
 
 //集計・分析ページを描画し、プルダウンの初期選択用に現在の年月を渡す
@@ -52,5 +52,19 @@ export const fetchYearlyChartController = async (req: Request, res: Response) =>
     } catch (error) {
         console.error("年間集計の取得に失敗しました", error);
         res.status(500).json({ message: "年間集計の取得に失敗しました" });
+    }
+}
+
+//選択年の月ごと集計（活動回数・費用）を1〜12月ぶんJSONで返す。年のみ依存のため月別円グラフとは分離
+export const fetchMonthlyChartController = async (req: Request, res: Response) => {
+    try {
+        const year = req.query.year as string;
+        // 未指定/不正な年はMySQLのバインドエラー（例外→500）を招くため、Model呼び出し前に弾く
+        if (!/^\d{4}$/.test(year)) return res.status(400).json({ message: "年の指定が正しくありません" });
+        const months = await fetchMonthlyChartModel(year);
+        res.status(200).json({ months });
+    } catch (error) {
+        console.error("月別集計の取得に失敗しました", error);
+        res.status(500).json({ message: "月別集計の取得に失敗しました" });
     }
 }

@@ -1,30 +1,60 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
-<div id="yearly-summary">
-  <div id="yearly-heading"></div>
-  <div class="summary-cards">
-    <div class="summary-card">
-      <div class="summary-card-title">活動回数</div>
-      <div class="summary-card-value" id="yearly-count">0回</div>
-    </div>
-    <div class="summary-card">
-      <div class="summary-card-title">合計費用</div>
-      <div class="summary-card-value" id="yearly-cost">0円</div>
+<div class="zone year">
+  <div class="zone-head">
+    <span class="zone-ic blue">📅</span>
+    <div class="zone-head-text">
+      <div class="zone-title">年間の記録</div>
+      <div class="zone-sub">年を選ぶと、この下の年間サマリーと月別グラフが切り替わります</div>
     </div>
   </div>
-</div>
-
-<div id="analyze">
-  <label for="month">年・月を選択してください</label>
-  <div>
+  <div class="zone-select">
+    <label for="year">年</label>
     <select id="year">
       <% for (let y = Math.min(2025, currentYear); y <= currentYear; y++) { %>
       <option value="<%= y %>" <%= currentYear === y ? 'selected' : '' %>><%= y %>年</option>
       <% } %>
     </select>
   </div>
-  <div>
+
+  <div id="yearly-summary">
+    <div id="yearly-heading"></div>
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="summary-card-title">活動回数</div>
+        <div class="summary-card-value" id="yearly-count">0回</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-card-title">合計費用</div>
+        <div class="summary-card-value" id="yearly-cost">0円</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="monthly-summary" hidden>
+    <div class="monthly-heading" id="monthly-count-heading">月ごとの活動回数</div>
+    <div class="chart-container">
+      <canvas id="myMonthlyCountChart"></canvas>
+    </div>
+    <div class="monthly-heading" id="monthly-cost-heading">月ごとの費用</div>
+    <div class="chart-container">
+      <canvas id="myMonthlyCostChart"></canvas>
+    </div>
+  </div>
+  <p id="monthly-message"></p>
+</div>
+
+<div class="zone month">
+  <div class="zone-head">
+    <span class="zone-ic coral">🔍</span>
+    <div class="zone-head-text">
+      <div class="zone-title">月別のくわしい内訳</div>
+      <div class="zone-sub">月を選ぶと、上記選択中の年のその月の円グラフとランキングが切り替わります</div>
+    </div>
+  </div>
+  <div class="zone-select">
+    <label for="month">月</label>
     <select id="month">
       <option value="1" <%= currentMonth === 1 ? 'selected' : '' %>>1月</option>
       <option value="2" <%= currentMonth === 2 ? 'selected' : '' %>>2月</option>
@@ -40,21 +70,21 @@
       <option value="12" <%= currentMonth === 12 ? 'selected' : '' %>>12月</option>
     </select>
   </div>
-</div>
 
-<div id="chart-message"></div>
+  <div id="chart-message"></div>
 
-<div id="chart-results" hidden>
-  <div id="oshikatu-percent"></div>
-  <div class="chart-container">
-    <canvas id="myPieChart"></canvas>
+  <div id="chart-results" hidden>
+    <div id="oshikatu-percent"></div>
+    <div class="chart-container">
+      <canvas id="myPieChart"></canvas>
+    </div>
+    <div id="oshikatu-cost"></div>
+    <div class="chart-container">
+      <canvas id="myCostPieChart"></canvas>
+    </div>
+    <div id="cost-ranking-heading">カテゴリ別支出ランキング</div>
+    <ul id="cost-ranking"></ul>
   </div>
-  <div id="oshikatu-cost"></div>
-  <div class="chart-container">
-    <canvas id="myCostPieChart"></canvas>
-  </div>
-  <div id="cost-ranking-heading">カテゴリ別支出ランキング</div>
-  <ul id="cost-ranking"></ul>
 </div>
 
 <script>
@@ -63,6 +93,8 @@
   const month = document.getElementById('month')
   let myChart = null;
   let myCostChart = null;
+  let myMonthlyCountChart = null;
+  let myMonthlyCostChart = null;
 
   const loadChart = async (selectedYear, selectedMonth) => {
     const message = document.getElementById('chart-message');
@@ -190,18 +222,154 @@
     }
   }
 
+  // 費用軸の省略表記：1万以上は「○万」（割り切れなければ小数1桁）、1000〜9999は「○千」、それ未満はそのまま
+  const formatCostAxis = (value) => {
+    if (value >= 10000) {
+      const man = value / 10000;
+      // 末尾の0を省く（8.0万→8万、12.5万→12.5万）
+      return `${Number(man.toFixed(1))}万`;
+    }
+    if (value >= 1000) {
+      const sen = value / 1000;
+      return `${Number(sen.toFixed(1))}千`;
+    }
+    return `${value}`;
+  }
+
+  // 軸の刻み幅を「きりの良い値」(1/2/5×10ⁿ)で決める。目盛りが6本前後になるようデータ上限から算出し、
+  // データが小さい年でも棒がつぶれないよう最小刻み minStep を下限にする（回数=1回、費用=1000円）
+  const niceStep = (maxVal, minStep) => {
+    if (maxVal <= 0) return minStep;
+    const rough = maxVal / 6;
+    const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+    for (const c of [1, 2, 5, 10]) {
+      const step = c * pow;
+      if (step >= rough) return Math.max(step, minStep);
+    }
+    return Math.max(10 * pow, minStep);
+  }
+
+  // 月別の棒グラフ（活動回数・費用）。年のみ依存のため月別円グラフとは別に取得する
+  const loadMonthly = async (selectedYear) => {
+    const wrap = document.getElementById('monthly-summary');
+    const message = document.getElementById('monthly-message');
+    const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    const legendFont = { family: "'Zen Maru Gothic', sans-serif" };
+    const tickFont = { family: "'Zen Maru Gothic', sans-serif" };
+    try {
+      const response = await fetch(`/api/chart/monthly?year=${selectedYear}`)
+      const data = await response.json();
+      // 年を素早く切り替えたとき、古い応答が新しい選択を上書きしないよう破棄する
+      if (year.value !== String(selectedYear)) return;
+      if (myMonthlyCountChart) {
+        myMonthlyCountChart.destroy();
+        myMonthlyCountChart = null;
+      }
+      if (myMonthlyCostChart) {
+        myMonthlyCostChart.destroy();
+        myMonthlyCostChart = null;
+      }
+      if (!response.ok) {
+        wrap.hidden = true;
+        message.textContent = '月別データの取得に失敗しました';
+        return;
+      }
+      const months = data.months || [];
+      const counts = months.map((m) => m.count || 0);
+      const costs = months.map((m) => m.cost || 0);
+      const totalCount = counts.reduce((a, b) => a + b, 0);
+      // データ0件の年は月別セクションごと非表示（エラーではないのでメッセージは出さない）
+      if (totalCount === 0) {
+        wrap.hidden = true;
+        message.textContent = '';
+        return;
+      }
+      wrap.hidden = false;
+      message.textContent = '';
+
+      // 回数・費用とも、きりの良い刻みで上限をデータに合わせて自動で伸ばす。
+      // 最小刻みは回数=1回・費用=1000円まで下げ、少額の月ばかりの年でも棒が見えるようにする
+      const countStep = niceStep(Math.max(...counts), 1);
+      const countMax = Math.max(countStep, Math.ceil(Math.max(...counts) / countStep) * countStep);
+      const costStep = niceStep(Math.max(...costs), 1000);
+      const costMax = Math.max(costStep, Math.ceil(Math.max(...costs) / costStep) * costStep);
+
+      const ctxCount = document.getElementById('myMonthlyCountChart').getContext('2d');
+      const ctxCost = document.getElementById('myMonthlyCostChart').getContext('2d');
+      myMonthlyCountChart = new Chart(ctxCount, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '活動回数',
+            data: counts,
+            backgroundColor: '#E3A08D',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: legendFont, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y}回` } }
+          },
+          scales: {
+            x: { ticks: { font: tickFont, color: '#5A5248' } },
+            y: { beginAtZero: true, max: countMax, ticks: { font: tickFont, color: '#5A5248', stepSize: countStep, precision: 0 } }
+          }
+        }
+      });
+      myMonthlyCostChart = new Chart(ctxCost, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '費用(円)',
+            data: costs,
+            backgroundColor: '#A9C2A0',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: legendFont, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${(ctx.parsed.y || 0).toLocaleString()}円` } }
+          },
+          scales: {
+            x: { ticks: { font: tickFont, color: '#5A5248' } },
+            y: { beginAtZero: true, max: costMax, ticks: { font: tickFont, color: '#5A5248', stepSize: costStep, callback: (value) => formatCostAxis(value) } }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      wrap.hidden = true;
+      // 通信・サーバエラー時は「0件の年」と区別できるよう日本語メッセージを出す
+      message.textContent = '月別データの取得に失敗しました';
+    }
+  }
+
   // 年・月どちらを変更しても再取得する
   const handleChange = () => {
     loadChart(year.value, month.value);
   }
   year.addEventListener('change', handleChange)
   month.addEventListener('change', handleChange)
-  // 年間サマリーは年の変更時のみ更新（月には依存しない）
-  year.addEventListener('change', () => loadYearly(year.value))
+  // 年間サマリー・月別棒グラフは年の変更時のみ更新（月には依存しない）
+  year.addEventListener('change', () => {
+    loadYearly(year.value);
+    loadMonthly(year.value);
+  })
 
   // 初期表示：サーバーで選択済みの今年・今月で自動取得する
   window.addEventListener('DOMContentLoaded', () => {
     loadChart(year.value, month.value);
     loadYearly(year.value);
+    loadMonthly(year.value);
   })
 </script>
