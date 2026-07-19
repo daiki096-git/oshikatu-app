@@ -722,7 +722,8 @@ label {
   border-radius: 13px;
   padding: 12px 14px;
   font-family: var(--font-body);
-  font-size: 14px;
+  /* iOSは16px未満の入力欄にフォーカスすると自動ズームして戻らないため、16pxで防止する */
+  font-size: 16px;
   color: var(--ink);
   box-sizing: border-box;
 }
@@ -816,8 +817,6 @@ label {
    ========================================================= */
 #task-section {
   margin: 34px 0;
-  padding-top: 22px;
-  border-top: 1px solid var(--line);
 }
 
 #task-head {
@@ -851,6 +850,12 @@ label {
 #modal #task-section #task-add {
   flex-shrink: 0;
   padding: 11px 14px;
+  background: var(--ivory-deep);
+  color: var(--ink);
+}
+
+/* 「＋費用を追加」もタスクの「＋追加」と同じ色（ivory-deep／ink）に揃える */
+#cost-input-row #cost-add {
   background: var(--ivory-deep);
   color: var(--ink);
 }
