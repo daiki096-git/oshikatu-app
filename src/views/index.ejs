@@ -33,17 +33,12 @@
     <div id="task-section">
       <div id="task-head">
         <label>準備TODO</label>
-        <span id="task-progress-pill">準備なし</span>
-      </div>
-      <div id="task-progress-track">
-        <div id="task-progress-bar"></div>
       </div>
       <div id="task-input-row">
         <input type="text" id="task-name" placeholder="準備することを追加（例: チケット発券）">
         <button type="button" id="task-add">＋追加</button>
       </div>
       <ul id="task-list"></ul>
-      <p id="task-empty">🗓️ まだ準備することがありません。上の欄から追加してみましょう。</p>
       <div id="task-completed-wrap">
         <p id="task-completed-divider">完了した準備</p>
         <ul id="task-completed-list"></ul>
@@ -195,6 +190,18 @@
           tasks[index].due_date = dateInput.value ? dateInput.value : null;
           renderTasks();
         });
+        // タップで確実にカレンダーを開く（未対応環境はフォーカスへフォールバック）
+        wrap.addEventListener("click", () => {
+          if (typeof dateInput.showPicker === "function") {
+            try {
+              dateInput.showPicker();
+            } catch (e) {
+              dateInput.focus();
+            }
+          } else {
+            dateInput.focus();
+          }
+        });
         wrap.appendChild(chip);
         wrap.appendChild(dateInput);
         if (task.due_date) {
@@ -202,7 +209,9 @@
           clearBtn.type = "button";
           clearBtn.className = "task-due-clear";
           clearBtn.textContent = "×";
-          clearBtn.addEventListener("click", () => {
+          clearBtn.addEventListener("click", (e) => {
+            // wrap のクリック（ピッカー起動）を誘発させない
+            e.stopPropagation();
             tasks[index].due_date = null;
             renderTasks();
           });
@@ -243,11 +252,10 @@
         return li;
       }
 
-      // 進捗ピル・バー・一覧を再描画する（未完了は上、完了は区切りの下）
+      // タスク一覧を再描画する（未完了は上、完了は区切りの下）
       function renderTasks() {
         const list = document.getElementById("task-list");
         const completedList = document.getElementById("task-completed-list");
-        const empty = document.getElementById("task-empty");
         const completedWrap = document.getElementById("task-completed-wrap");
         list.innerHTML = "";
         completedList.innerHTML = "";
@@ -261,18 +269,6 @@
             list.appendChild(item);
           }
         });
-        const total = tasks.length;
-        const pill = document.getElementById("task-progress-pill");
-        const bar = document.getElementById("task-progress-bar");
-        if (total === 0) {
-          pill.textContent = "準備なし";
-          bar.style.width = "0%";
-          empty.style.display = "block";
-        } else {
-          pill.textContent = `${completedCount} / ${total} 完了`;
-          bar.style.width = `${Math.round((completedCount / total) * 100)}%`;
-          empty.style.display = "none";
-        }
         completedWrap.style.display = completedCount > 0 ? "block" : "none";
       }
 

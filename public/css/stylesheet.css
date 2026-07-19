@@ -815,47 +815,18 @@ label {
    準備TODO（モーダル内）
    ========================================================= */
 #task-section {
-  margin-top: 18px;
-  padding-top: 16px;
+  margin: 34px 0;
+  padding-top: 22px;
   border-top: 1px solid var(--line);
 }
 
 #task-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
 }
 
 #task-head label {
   margin: 0;
-}
-
-#task-progress-pill {
-  flex-shrink: 0;
-  font-family: var(--font-round);
-  font-weight: 700;
-  font-size: 11px;
-  color: var(--coral-deep);
-  background: #F7E3DC;
-  border-radius: 20px;
-  padding: 3px 12px;
-}
-
-#task-progress-track {
-  height: 6px;
-  background: var(--ivory-deep);
-  border-radius: 6px;
-  overflow: hidden;
-  margin: 10px 0 14px;
-}
-
-#task-progress-bar {
-  height: 100%;
-  width: 0%;
-  border-radius: 6px;
-  background: linear-gradient(135deg, var(--coral), var(--coral-deep));
-  transition: width .25s ease;
 }
 
 /* 入力行：テキスト入力＋追加ボタンを横並び（費用入力行に合わせる） */
@@ -863,6 +834,7 @@ label {
   display: flex;
   align-items: center;
   gap: 8px;
+  margin-top: 12px;
 }
 
 #task-input-row #task-name {
@@ -935,24 +907,28 @@ label {
   color: var(--ink-faint);
 }
 
-/* 期限チップ：透明な date input を重ねてネイティブ選択を開く */
+/* 期限チップ：透明な date input を全面に重ねてネイティブ選択を開く */
 .task-due-wrap {
   position: relative;
   display: inline-flex;
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .task-due-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
   font-family: var(--font-round);
   font-weight: 500;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--ink-soft);
   background: var(--ivory);
   border: 1px solid var(--line);
   border-radius: 20px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   white-space: nowrap;
 }
 
@@ -968,16 +944,19 @@ label {
   border-color: var(--coral);
 }
 
+/* 透明 date input をチップ全面に重ねる。クリックは wrap 側で拾って showPicker するため
+   自身はクリックを奪わない（pointer-events: none） */
 .task-due-input {
   position: absolute;
   inset: 0;
   opacity: 0;
   width: 100%;
   height: 100%;
+  min-height: 32px;
   border: none;
   padding: 0;
   margin: 0;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 #modal #task-section .task-due-clear {
@@ -998,15 +977,6 @@ label {
   background: transparent;
   font-size: 15px;
   line-height: 1;
-}
-
-#task-empty {
-  text-align: center;
-  font-family: var(--font-round);
-  font-size: 13px;
-  color: var(--ink-soft);
-  padding: 18px 12px;
-  margin: 10px 0 0;
 }
 
 #task-completed-wrap {
