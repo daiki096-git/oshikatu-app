@@ -854,6 +854,12 @@ label {
   color: var(--ink);
 }
 
+/* 「＋費用を追加」もタスクの「＋追加」と同じ色（ivory-deep／ink）に揃える */
+#cost-input-row #cost-add {
+  background: var(--ivory-deep);
+  color: var(--ink);
+}
+
 #task-list,
 #task-completed-list {
   list-style: none;
