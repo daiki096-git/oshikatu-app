@@ -217,6 +217,17 @@
     return `${value}`;
   }
 
+  // 軸の刻み幅を「きりの良い値」で決める。目盛りが増えすぎないよう、データ上限に応じて
+  // unit×(1→2→5→10→20…) と刻みを広げる（目盛り数はおよそ8以内）。回数は unit=1、費用は unit=10000
+  const niceStep = (maxVal, unit) => {
+    const candidates = [1, 2, 5, 10, 20, 50, 100, 200, 500];
+    const maxU = maxVal / unit;
+    for (const c of candidates) {
+      if (maxU / c <= 8) return c * unit;
+    }
+    return candidates[candidates.length - 1] * unit;
+  }
+
   // 月別の棒グラフ（活動回数・費用）。年のみ依存のため月別円グラフとは別に取得する
   const loadMonthly = async (selectedYear) => {
     const wrap = document.getElementById('monthly-summary');
@@ -249,6 +260,12 @@
       }
       wrap.hidden = false;
 
+      // 回数・費用とも、きりの良い刻みで上限をデータに合わせて自動で伸ばす（回数は1刻みから、費用は1万刻みから）
+      const countStep = niceStep(Math.max(...counts), 1);
+      const countMax = Math.max(countStep, Math.ceil(Math.max(...counts) / countStep) * countStep);
+      const costStep = niceStep(Math.max(...costs), 10000);
+      const costMax = Math.max(costStep, Math.ceil(Math.max(...costs) / costStep) * costStep);
+
       const ctxCount = document.getElementById('myMonthlyCountChart').getContext('2d');
       const ctxCost = document.getElementById('myMonthlyCostChart').getContext('2d');
       myMonthlyCountChart = new Chart(ctxCount, {
@@ -272,7 +289,7 @@
           },
           scales: {
             x: { ticks: { font: tickFont, color: '#5A5248' } },
-            y: { beginAtZero: true, ticks: { font: tickFont, color: '#5A5248', precision: 0 } }
+            y: { beginAtZero: true, max: countMax, ticks: { font: tickFont, color: '#5A5248', stepSize: countStep, precision: 0 } }
           }
         }
       });
@@ -297,7 +314,7 @@
           },
           scales: {
             x: { ticks: { font: tickFont, color: '#5A5248' } },
-            y: { beginAtZero: true, ticks: { font: tickFont, color: '#5A5248', callback: (value) => formatCostAxis(value) } }
+            y: { beginAtZero: true, max: costMax, ticks: { font: tickFont, color: '#5A5248', stepSize: costStep, callback: (value) => formatCostAxis(value) } }
           }
         }
       });
