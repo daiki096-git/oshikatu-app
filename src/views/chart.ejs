@@ -42,6 +42,7 @@
       <canvas id="myMonthlyCostChart"></canvas>
     </div>
   </div>
+  <p id="monthly-message"></p>
 </div>
 
 <div class="zone month">
@@ -251,6 +252,7 @@
   // 月別の棒グラフ（活動回数・費用）。年のみ依存のため月別円グラフとは別に取得する
   const loadMonthly = async (selectedYear) => {
     const wrap = document.getElementById('monthly-summary');
+    const message = document.getElementById('monthly-message');
     const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
     const legendFont = { family: "'Zen Maru Gothic', sans-serif" };
     const tickFont = { family: "'Zen Maru Gothic', sans-serif" };
@@ -269,18 +271,21 @@
       }
       if (!response.ok) {
         wrap.hidden = true;
+        message.textContent = '月別データの取得に失敗しました';
         return;
       }
       const months = data.months || [];
       const counts = months.map((m) => m.count || 0);
       const costs = months.map((m) => m.cost || 0);
       const totalCount = counts.reduce((a, b) => a + b, 0);
-      // データ0件の年は月別セクションごと非表示
+      // データ0件の年は月別セクションごと非表示（エラーではないのでメッセージは出さない）
       if (totalCount === 0) {
         wrap.hidden = true;
+        message.textContent = '';
         return;
       }
       wrap.hidden = false;
+      message.textContent = '';
 
       // 回数・費用とも、きりの良い刻みで上限をデータに合わせて自動で伸ばす。
       // 最小刻みは回数=1回・費用=1000円まで下げ、少額の月ばかりの年でも棒が見えるようにする
@@ -344,6 +349,8 @@
     } catch (error) {
       console.error(error);
       wrap.hidden = true;
+      // 通信・サーバエラー時は「0件の年」と区別できるよう日本語メッセージを出す
+      message.textContent = '月別データの取得に失敗しました';
     }
   }
 

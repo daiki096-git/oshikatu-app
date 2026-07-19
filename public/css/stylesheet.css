@@ -584,13 +584,19 @@ body {
   color: var(--coral-deep);
 }
 
-#chart-message:not(:empty) {
+#chart-message:not(:empty),
+#monthly-message:not(:empty) {
   text-align: center;
   padding: 48px 16px;
   font-family: var(--font-round);
   font-weight: 700;
   font-size: 15px;
   color: var(--ink-soft);
+}
+
+/* 空のときは余白を出さない（メッセージ要素が場所を取らないように） */
+#monthly-message {
+  margin: 0;
 }
 
 /* =========================================================
