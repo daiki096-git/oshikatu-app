@@ -722,7 +722,8 @@ label {
   border-radius: 13px;
   padding: 12px 14px;
   font-family: var(--font-body);
-  font-size: 14px;
+  /* iOSは16px未満の入力欄にフォーカスすると自動ズームして戻らないため、16pxで防止する */
+  font-size: 16px;
   color: var(--ink);
   box-sizing: border-box;
 }
