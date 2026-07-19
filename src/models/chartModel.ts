@@ -46,8 +46,11 @@ type monthlyChart={
 //指定年の月ごと活動回数・費用を1〜12月ぶん返す。無い月はcount:0/cost:0で0埋め
 export const fetchMonthlyChartModel=async(year:string):Promise<monthlyChart[]>=>{
     // 回数は memories、費用は memory_costs.amount 由来へ切替（JOINによる回数の水増しを避けるため別クエリ）
-    const [countRows]=await connection.execute('select MONTH(date) as month, COUNT(*) as count from memories where YEAR(date)=? AND date <= CURDATE() group by MONTH(date)',[year])
-    const [costRows]=await connection.execute('select MONTH(m.date) as month, sum(mc.amount) as cost from memory_costs mc join memories m on mc.memory_id = m.id where YEAR(m.date)=? AND m.date <= CURDATE() group by MONTH(m.date)',[year])
+    // 2クエリは独立しているため Promise.all で並列発行してレイテンシを抑える
+    const [[countRows],[costRows]]=await Promise.all([
+        connection.execute('select MONTH(date) as month, COUNT(*) as count from memories where YEAR(date)=? AND date <= CURDATE() group by MONTH(date)',[year]),
+        connection.execute('select MONTH(m.date) as month, sum(mc.amount) as cost from memory_costs mc join memories m on mc.memory_id = m.id where YEAR(m.date)=? AND m.date <= CURDATE() group by MONTH(m.date)',[year])
+    ])
     const counts=countRows as { month:number, count:number }[];
     const costs=costRows as { month:number, cost:string }[];
     const countMap=new Map<number, number>();

@@ -257,6 +257,8 @@
     try {
       const response = await fetch(`/api/chart/monthly?year=${selectedYear}`)
       const data = await response.json();
+      // 年を素早く切り替えたとき、古い応答が新しい選択を上書きしないよう破棄する
+      if (year.value !== String(selectedYear)) return;
       if (myMonthlyCountChart) {
         myMonthlyCountChart.destroy();
         myMonthlyCountChart = null;
