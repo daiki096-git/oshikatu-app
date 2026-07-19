@@ -811,6 +811,191 @@ label {
   border: 1px solid var(--line) !important;
 }
 
+/* =========================================================
+   準備TODO（モーダル内）
+   ========================================================= */
+#task-section {
+  margin: 34px 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--line);
+}
+
+#task-head {
+  display: flex;
+  align-items: center;
+}
+
+#task-head label {
+  margin: 0;
+}
+
+/* 入力行：テキスト入力＋追加ボタンを横並び（費用入力行に合わせる） */
+#task-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+#task-input-row #task-name {
+  flex: 1;
+  min-width: 0;
+}
+
+#modal #task-section button {
+  margin: 0;
+  padding: 0;
+  border-radius: 12px;
+}
+
+#modal #task-section #task-add {
+  flex-shrink: 0;
+  padding: 11px 14px;
+  background: var(--ivory-deep);
+  color: var(--ink);
+}
+
+#task-list,
+#task-completed-list {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+
+.task-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 8px;
+}
+
+#modal #task-section .task-check {
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--line) !important;
+  background: var(--card);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+#modal #task-section .task-item.is-completed .task-check {
+  background: var(--coral);
+  border-color: var(--coral) !important;
+}
+
+.task-name-text {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--font-round);
+  font-size: 14px;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.task-item.is-completed .task-name-text {
+  text-decoration: line-through;
+  color: var(--ink-faint);
+}
+
+/* 期限チップ：透明な date input を全面に重ねてネイティブ選択を開く */
+.task-due-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.task-due-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  font-family: var(--font-round);
+  font-weight: 500;
+  font-size: 12px;
+  color: var(--ink-soft);
+  background: var(--ivory);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 4px 12px;
+  white-space: nowrap;
+}
+
+.task-due-chip.is-empty {
+  color: var(--ink-faint);
+  background: transparent;
+  border-style: dashed;
+}
+
+.task-due-chip.is-overdue {
+  color: var(--coral-deep);
+  background: #FBEFEA;
+  border-color: var(--coral);
+}
+
+/* 透明 date input をチップ全面に重ねる。クリックは wrap 側で拾って showPicker するため
+   自身はクリックを奪わない（pointer-events: none） */
+.task-due-input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 32px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
+#modal #task-section .task-due-clear {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ivory-deep);
+  color: var(--ink-soft);
+  font-size: 12px;
+  line-height: 1;
+  display: grid;
+  place-items: center;
+}
+
+#modal #task-section .task-delete {
+  flex-shrink: 0;
+  background: transparent;
+  font-size: 15px;
+  line-height: 1;
+}
+
+#task-completed-wrap {
+  display: none;
+}
+
+#task-completed-divider {
+  font-family: var(--font-round);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--ink-faint);
+  margin: 14px 0 8px;
+}
+
+.task-item.is-completed {
+  background: var(--ivory);
+  box-shadow: none;
+}
+
 /* ---------- レスポンシブ ---------- */
 @media (max-width: 380px) {
   .tab {

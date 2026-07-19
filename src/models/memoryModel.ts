@@ -7,6 +7,20 @@ export type MemoryCost = {
   amount: number;
 };
 
+export type MemoryTask = {
+  id: number;
+  task_name: string;
+  is_completed: number;
+  due_date: string | null;
+};
+
+// 登録・更新時の入力（idはDB採番のため持たない）
+export type MemoryTaskInput = {
+  task_name: string;
+  is_completed: number;
+  due_date: string | null;
+};
+
 type MemoryWithImages = {
   id: number;
   date: string;
@@ -14,6 +28,7 @@ type MemoryWithImages = {
   memory: string;
   cost: number;
   costs: MemoryCost[];
+  tasks: MemoryTask[];
   category:string;
   color:string;
   imageUrl: string[];
@@ -34,7 +49,7 @@ const categoryColorMap: Record<string, string> = {
   activity: "#9D4EDD"
 };
 
-export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,costs:MemoryCost[],imageUrl:string[]):Promise<void>=>{
+export const registerMemoryModel=async(memory:string,title:string,category:string,date:string,costs:MemoryCost[],tasks:MemoryTaskInput[],imageUrl:string[]):Promise<void>=>{
 const conn=await connection.getConnection()
 try{
     await conn.beginTransaction();
@@ -47,6 +62,10 @@ try{
     }
     for(const c of costs){
         await conn.execute('insert into memory_costs (memory_id,category,amount) values (?,?,?)',[memoryId,c.category,c.amount])
+    }
+    // 準備TODOも費用と同じく明細一括INSERT
+    for(const t of tasks){
+        await conn.execute('insert into memory_tasks (memory_id,task_name,is_completed,due_date) values (?,?,?,?)',[memoryId,t.task_name,t.is_completed,t.due_date])
     }
     await conn.commit();
 }catch(error){
@@ -95,6 +114,7 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
         category:row.category,
         cost: row.cost,
         costs: [],
+        tasks: [],
         imageUrl: [],
         color:categoryColorMap[row.category]
       });
@@ -111,11 +131,23 @@ export const fetchMemoryModel=async():Promise<MemoryWithImages[]>=>{
     memoryMap.get(cost.memory_id)?.costs.push({ category: cost.category, amount: cost.amount });
   }
 
+  // 準備TODOも別クエリで取得して memory_id で紐付ける（画像・費用との直積を避ける）
+  // due_date は DATE 型を YYYY-MM-DD 文字列で受け取り（NULL可）、未完了→完了・id昇順で並べる
+  const [taskRows]=await connection.execute<RowDataPacket[]>("select memory_id,id,task_name,is_completed,date_format(due_date,'%Y-%m-%d') as due_date from memory_tasks order by is_completed asc, id asc")
+  for (const task of taskRows) {
+    memoryMap.get(task.memory_id)?.tasks.push({
+      id: task.id,
+      task_name: task.task_name,
+      is_completed: task.is_completed,
+      due_date: task.due_date
+    });
+  }
+
   return Array.from(memoryMap.values());
 
 }
 
-export const updateMemoryModel=async(memory:string,title:string,date:string,costs:MemoryCost[],category:string,imageUrl:string[],id:string):Promise<boolean>=>{
+export const updateMemoryModel=async(memory:string,title:string,date:string,costs:MemoryCost[],tasks:MemoryTaskInput[],category:string,imageUrl:string[],id:string):Promise<boolean>=>{
 const conn=await connection.getConnection();
 try{
 await conn.beginTransaction();
@@ -130,6 +162,11 @@ await conn.execute('INSERT INTO memory_images (memory_id,image_path) values (?,?
 await conn.execute('DELETE FROM memory_costs where memory_id=?',[id])
 for(const c of costs){
 await conn.execute('INSERT INTO memory_costs (memory_id,category,amount) values (?,?,?)',[id,c.category,c.amount])
+}
+// 準備TODOも全削除→再挿入（費用と同型）
+await conn.execute('DELETE FROM memory_tasks where memory_id=?',[id])
+for(const t of tasks){
+await conn.execute('INSERT INTO memory_tasks (memory_id,task_name,is_completed,due_date) values (?,?,?,?)',[id,t.task_name,t.is_completed,t.due_date])
 }
 await conn.commit();
 return true;

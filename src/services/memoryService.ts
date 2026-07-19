@@ -1,4 +1,4 @@
-import { registerMemoryModel, fetchMemoryModel, updateMemoryModel, deleteMemoryModel, MemoryCost } from "../models/memoryModel";
+import { registerMemoryModel, fetchMemoryModel, updateMemoryModel, deleteMemoryModel, MemoryCost, MemoryTaskInput } from "../models/memoryModel";
 import s3 from "../config/s3"
 import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
@@ -19,6 +19,7 @@ type registerMemoryDto = {
     date: string,
     category: string,
     costs: MemoryCost[],
+    tasks: MemoryTaskInput[],
     files: Express.Multer.File[]
 }
 type updateMemoryDto = {
@@ -28,6 +29,7 @@ type updateMemoryDto = {
     date: string,
     category: string,
     costs: MemoryCost[],
+    tasks: MemoryTaskInput[],
     files: Express.Multer.File[] | undefined
 }
 
@@ -59,7 +61,7 @@ class MemoryService {
             }
         }
         try {
-            await registerMemoryModel(data.memory, data.title, data.category, data.date, data.costs, imageUrl)
+            await registerMemoryModel(data.memory, data.title, data.category, data.date, data.costs, data.tasks, imageUrl)
         } catch (error) {
             //DB更新失敗時はアップロード済みS3ファイルをロールバック
             await Promise.all(deleteUrl.map(key =>
@@ -85,6 +87,7 @@ class MemoryService {
             extendedProps: {
                 id: memory.id.toString(),
                 costs: memory.costs,
+                tasks: memory.tasks,
                 memory: memory.memory,
                 imageUrl: memory.imageUrl,
                 category: memory.category
@@ -124,7 +127,7 @@ class MemoryService {
         //DB更新
         let updateResult: boolean
         try {
-            updateResult = await updateMemoryModel(data.memory, data.title, data.date, data.costs, data.category, imageUrl, data.id)
+            updateResult = await updateMemoryModel(data.memory, data.title, data.date, data.costs, data.tasks, data.category, imageUrl, data.id)
         } catch (error) {
             //DB更新が例外で失敗した場合も新規アップロード済みS3ファイルをロールバック
             await Promise.all(deleteUrl.map(key =>
