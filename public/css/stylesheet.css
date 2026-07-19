@@ -364,6 +364,7 @@ body {
 }
 
 #analyze {
+  margin-top: 34px;
   margin-bottom: 8px;
   display: flex;
   flex-wrap: wrap;
