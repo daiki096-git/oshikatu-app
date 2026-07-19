@@ -453,12 +453,16 @@ body {
   border-radius: var(--radius);
 }
 
-#yearly-heading {
+#yearly-heading,
+.monthly-heading {
   font-family: var(--font-round);
   font-weight: 700;
   font-size: 15px;
   color: var(--ink);
   text-align: left;
+}
+
+#yearly-heading {
   margin: 18px 4px 12px;
 }
 
@@ -510,13 +514,8 @@ body {
   margin: 26px 4px 12px;
 }
 
-/* 月別棒グラフの見出し。既存の #yearly-heading に準じたトーンで揃える */
+/* 月別棒グラフの見出し。共通スタイルは #yearly-heading とまとめ、余白のみ個別指定 */
 .monthly-heading {
-  font-family: var(--font-round);
-  font-weight: 700;
-  font-size: 15px;
-  color: var(--ink);
-  text-align: left;
   margin: 26px 4px 12px;
 }
 

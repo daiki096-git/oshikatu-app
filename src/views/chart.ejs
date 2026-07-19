@@ -235,15 +235,17 @@
     return `${value}`;
   }
 
-  // 軸の刻み幅を「きりの良い値」で決める。目盛りが増えすぎないよう、データ上限に応じて
-  // unit×(1→2→5→10→20…) と刻みを広げる（目盛り数はおよそ8以内）。回数は unit=1、費用は unit=10000
-  const niceStep = (maxVal, unit) => {
-    const candidates = [1, 2, 5, 10, 20, 50, 100, 200, 500];
-    const maxU = maxVal / unit;
-    for (const c of candidates) {
-      if (maxU / c <= 8) return c * unit;
+  // 軸の刻み幅を「きりの良い値」(1/2/5×10ⁿ)で決める。目盛りが6本前後になるようデータ上限から算出し、
+  // データが小さい年でも棒がつぶれないよう最小刻み minStep を下限にする（回数=1回、費用=1000円）
+  const niceStep = (maxVal, minStep) => {
+    if (maxVal <= 0) return minStep;
+    const rough = maxVal / 6;
+    const pow = Math.pow(10, Math.floor(Math.log10(rough)));
+    for (const c of [1, 2, 5, 10]) {
+      const step = c * pow;
+      if (step >= rough) return Math.max(step, minStep);
     }
-    return candidates[candidates.length - 1] * unit;
+    return Math.max(10 * pow, minStep);
   }
 
   // 月別の棒グラフ（活動回数・費用）。年のみ依存のため月別円グラフとは別に取得する
@@ -278,10 +280,11 @@
       }
       wrap.hidden = false;
 
-      // 回数・費用とも、きりの良い刻みで上限をデータに合わせて自動で伸ばす（回数は1刻みから、費用は1万刻みから）
+      // 回数・費用とも、きりの良い刻みで上限をデータに合わせて自動で伸ばす。
+      // 最小刻みは回数=1回・費用=1000円まで下げ、少額の月ばかりの年でも棒が見えるようにする
       const countStep = niceStep(Math.max(...counts), 1);
       const countMax = Math.max(countStep, Math.ceil(Math.max(...counts) / countStep) * countStep);
-      const costStep = niceStep(Math.max(...costs), 10000);
+      const costStep = niceStep(Math.max(...costs), 1000);
       const costMax = Math.max(costStep, Math.ceil(Math.max(...costs) / costStep) * costStep);
 
       const ctxCount = document.getElementById('myMonthlyCountChart').getContext('2d');
