@@ -30,6 +30,25 @@
     </div>
     <ul id="cost-list"></ul>
     <p id="cost-total">合計: 0円</p>
+    <div id="task-section">
+      <div id="task-head">
+        <label>準備TODO</label>
+        <span id="task-progress-pill">準備なし</span>
+      </div>
+      <div id="task-progress-track">
+        <div id="task-progress-bar"></div>
+      </div>
+      <div id="task-input-row">
+        <input type="text" id="task-name" placeholder="準備することを追加（例: チケット発券）">
+        <button type="button" id="task-add">＋追加</button>
+      </div>
+      <ul id="task-list"></ul>
+      <p id="task-empty">🗓️ まだ準備することがありません。上の欄から追加してみましょう。</p>
+      <div id="task-completed-wrap">
+        <p id="task-completed-divider">完了した準備</p>
+        <ul id="task-completed-list"></ul>
+      </div>
+    </div>
     <label for="memory-text">メモ</label><br>
     <textarea id="memory-text" rows="5" cols="30"></textarea><br>
     <div id="preview-img"></div>
@@ -131,6 +150,147 @@
         renderCosts();
       }
 
+      // モーダルで編集中の準備TODO（費用と同じくクライアント保持→保存時に一括送信）
+      let tasks = [];
+      const MAX_TASK_NAME_LENGTH = 255;
+
+      // ローカル日付を YYYY-MM-DD 文字列で取得（期限切れ判定の基準）
+      function todayStr() {
+        const now = new Date();
+        const y = now.getFullYear();
+        const m = String(now.getMonth() + 1).padStart(2, "0");
+        const d = String(now.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+      }
+      // YYYY-MM-DD を M/D 表示へ整形
+      function formatDueLabel(due) {
+        const [, m, d] = due.split("-");
+        return `${Number(m)}/${Number(d)}`;
+      }
+
+      // 期限チップを生成する（未設定は破線「＋期限」、設定時は日付＋クリア）
+      function createDueChip(task, index) {
+        const wrap = document.createElement("span");
+        wrap.className = "task-due-wrap";
+        const chip = document.createElement("span");
+        chip.className = "task-due-chip";
+        // 期限切れ＋未完了のみ赤（完了済みは赤にしない）
+        if (task.due_date) {
+          chip.textContent = `📅 ${formatDueLabel(task.due_date)}`;
+          if (!task.is_completed && task.due_date < todayStr()) {
+            chip.classList.add("is-overdue");
+          }
+        } else {
+          chip.classList.add("is-empty");
+          chip.textContent = "＋期限";
+        }
+        // チップに重ねた透明な date input でネイティブの日付選択を開く
+        const dateInput = document.createElement("input");
+        dateInput.type = "date";
+        dateInput.className = "task-due-input";
+        if (task.due_date) dateInput.value = task.due_date;
+        dateInput.addEventListener("change", () => {
+          tasks[index].due_date = dateInput.value ? dateInput.value : null;
+          renderTasks();
+        });
+        wrap.appendChild(chip);
+        wrap.appendChild(dateInput);
+        if (task.due_date) {
+          const clearBtn = document.createElement("button");
+          clearBtn.type = "button";
+          clearBtn.className = "task-due-clear";
+          clearBtn.textContent = "×";
+          clearBtn.addEventListener("click", () => {
+            tasks[index].due_date = null;
+            renderTasks();
+          });
+          wrap.appendChild(clearBtn);
+        }
+        return wrap;
+      }
+
+      // 1タスクの行を生成する
+      function createTaskItem(task, index) {
+        const li = document.createElement("li");
+        li.className = "task-item";
+        if (task.is_completed) li.classList.add("is-completed");
+        const check = document.createElement("button");
+        check.type = "button";
+        check.className = "task-check";
+        check.setAttribute("aria-label", task.is_completed ? "未完了に戻す" : "完了にする");
+        check.textContent = task.is_completed ? "✓" : "";
+        check.addEventListener("click", () => {
+          tasks[index].is_completed = tasks[index].is_completed ? 0 : 1;
+          renderTasks();
+        });
+        const name = document.createElement("span");
+        name.className = "task-name-text";
+        name.textContent = task.task_name;
+        const del = document.createElement("button");
+        del.type = "button";
+        del.className = "task-delete";
+        del.textContent = "🗑️";
+        del.addEventListener("click", () => {
+          tasks.splice(index, 1);
+          renderTasks();
+        });
+        li.appendChild(check);
+        li.appendChild(name);
+        li.appendChild(createDueChip(task, index));
+        li.appendChild(del);
+        return li;
+      }
+
+      // 進捗ピル・バー・一覧を再描画する（未完了は上、完了は区切りの下）
+      function renderTasks() {
+        const list = document.getElementById("task-list");
+        const completedList = document.getElementById("task-completed-list");
+        const empty = document.getElementById("task-empty");
+        const completedWrap = document.getElementById("task-completed-wrap");
+        list.innerHTML = "";
+        completedList.innerHTML = "";
+        let completedCount = 0;
+        tasks.forEach((task, index) => {
+          const item = createTaskItem(task, index);
+          if (task.is_completed) {
+            completedCount++;
+            completedList.appendChild(item);
+          } else {
+            list.appendChild(item);
+          }
+        });
+        const total = tasks.length;
+        const pill = document.getElementById("task-progress-pill");
+        const bar = document.getElementById("task-progress-bar");
+        if (total === 0) {
+          pill.textContent = "準備なし";
+          bar.style.width = "0%";
+          empty.style.display = "block";
+        } else {
+          pill.textContent = `${completedCount} / ${total} 完了`;
+          bar.style.width = `${Math.round((completedCount / total) * 100)}%`;
+          empty.style.display = "none";
+        }
+        completedWrap.style.display = completedCount > 0 ? "block" : "none";
+      }
+
+      // 準備TODOを追加する（名前のみ、trimして1〜255文字）
+      function addTask() {
+        const input = document.getElementById("task-name");
+        const name = input.value.trim();
+        if (name === "") {
+          alert("準備することを入力してください");
+          return;
+        }
+        if (name.length > MAX_TASK_NAME_LENGTH) {
+          alert("準備TODOは" + MAX_TASK_NAME_LENGTH + "文字以内で入力してください");
+          return;
+        }
+        tasks.push({ task_name: name, is_completed: 0, due_date: null });
+        input.value = "";
+        renderTasks();
+      }
+
       const calendarEl = document.getElementById("calendar");
       const calendar = new FullCalendar.Calendar(calendarEl, {
         initialView: 'dayGridMonth',
@@ -153,6 +313,8 @@
           event = null
           costs = [];
           renderCosts();
+          tasks = [];
+          renderTasks();
           document.getElementById("save").style.display = "";
           document.getElementById("update").style.display = "none";
           document.getElementById("selected-date").textContent = info.dateStr;
@@ -167,6 +329,13 @@
           // 登録済みの費用明細を復元表示
           costs = (event.extendedProps.costs || []).map(c => ({ category: c.category, amount: c.amount }));
           renderCosts();
+          // 登録済みの準備TODOを復元表示（ローカル配列で保持）
+          tasks = (event.extendedProps.tasks || []).map(t => ({
+            task_name: t.task_name,
+            is_completed: t.is_completed ? 1 : 0,
+            due_date: t.due_date || null
+          }));
+          renderTasks();
           if (!event.title) {
             document.getElementById("delete").style.display = "none"
             document.getElementById("update").style.display = "none"
@@ -187,6 +356,14 @@
       saveButton.addEventListener("click", clickButton)
       updateButton.addEventListener("click", clickButton)
       document.getElementById("cost-add").addEventListener("click", addCost)
+      document.getElementById("task-add").addEventListener("click", addTask)
+      // Enterキーでも準備TODOを追加（改行送信を抑止）
+      document.getElementById("task-name").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addTask();
+        }
+      })
       async function clickButton() {
         const title = document.getElementById("title").value
         const category = document.getElementById("category").value
@@ -201,6 +378,11 @@
         // 費用の入力欄に未追加の金額が残っている場合は、押し忘れとみなして保存を止める
         if (document.getElementById("cost-amount").value.trim() !== "") {
           alert("追加していない費用があります。「＋費用を追加」を押すか、金額の入力を消してから保存してください")
+          return
+        }
+        // 準備TODOの入力欄に未追加の名前が残っている場合も同様に止める
+        if (document.getElementById("task-name").value.trim() !== "") {
+          alert("追加していない準備TODOがあります。「＋追加」を押すか、入力を消してから保存してください")
           return
         }
         const save_confirm = confirm("この内容で保存してよろしいですか？元データがある場合、上書きされます。");
@@ -219,6 +401,7 @@
           formData.append("memory", memory)
           formData.append("category", category)
           formData.append("costs", JSON.stringify(costs))
+          formData.append("tasks", JSON.stringify(tasks))
           if (files && files.length > 0) {
             for (let i = 0; i < files.length; i++) {
               formData.append("files", files[i])
@@ -256,6 +439,7 @@
               existingEvent.setExtendedProp("memory", memory);
               existingEvent.setExtendedProp("category", category)
               existingEvent.setExtendedProp("costs", costs)
+              existingEvent.setExtendedProp("tasks", tasks)
               //以下は要調整
               existingEvent.setProp("color", categoryColorMap[category] || "#CCCCCC")
               existingEvent.setExtendedProp("imageUrl", result.imageUrl);
@@ -270,6 +454,7 @@
                   memory: memory,
                   category: category,
                   costs: costs,
+                  tasks: tasks,
                   imageUrl: result.imageUrl
                 }
               })
@@ -308,6 +493,9 @@
         document.getElementById("cost-category").value = "";
         document.getElementById("cost-amount").value = "";
         renderCosts();
+        tasks = [];
+        document.getElementById("task-name").value = "";
+        renderTasks();
 
       }
       // 複数画像を表示する関数を追加
