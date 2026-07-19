@@ -458,6 +458,16 @@ body {
   margin: 26px 4px 12px;
 }
 
+/* 月別棒グラフの見出し。既存の #yearly-heading に準じたトーンで揃える */
+.monthly-heading {
+  font-family: var(--font-round);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  text-align: left;
+  margin: 26px 4px 12px;
+}
+
 .chart-container {
   position: relative;
   height: 260px;

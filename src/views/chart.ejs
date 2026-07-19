@@ -15,6 +15,17 @@
   </div>
 </div>
 
+<div id="monthly-summary" hidden>
+  <div class="monthly-heading" id="monthly-count-heading">月ごとの活動回数</div>
+  <div class="chart-container">
+    <canvas id="myMonthlyCountChart"></canvas>
+  </div>
+  <div class="monthly-heading" id="monthly-cost-heading">月ごとの費用</div>
+  <div class="chart-container">
+    <canvas id="myMonthlyCostChart"></canvas>
+  </div>
+</div>
+
 <div id="analyze">
   <label for="month">年・月を選択してください</label>
   <div>
@@ -63,6 +74,8 @@
   const month = document.getElementById('month')
   let myChart = null;
   let myCostChart = null;
+  let myMonthlyCountChart = null;
+  let myMonthlyCostChart = null;
 
   const loadChart = async (selectedYear, selectedMonth) => {
     const message = document.getElementById('chart-message');
@@ -190,18 +203,126 @@
     }
   }
 
+  // 費用軸の省略表記：1万以上は「○万」（割り切れなければ小数1桁）、1000〜9999は「○千」、それ未満はそのまま
+  const formatCostAxis = (value) => {
+    if (value >= 10000) {
+      const man = value / 10000;
+      // 末尾の0を省く（8.0万→8万、12.5万→12.5万）
+      return `${Number(man.toFixed(1))}万`;
+    }
+    if (value >= 1000) {
+      const sen = value / 1000;
+      return `${Number(sen.toFixed(1))}千`;
+    }
+    return `${value}`;
+  }
+
+  // 月別の棒グラフ（活動回数・費用）。年のみ依存のため月別円グラフとは別に取得する
+  const loadMonthly = async (selectedYear) => {
+    const wrap = document.getElementById('monthly-summary');
+    const labels = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'];
+    const legendFont = { family: "'Zen Maru Gothic', sans-serif" };
+    const tickFont = { family: "'Zen Maru Gothic', sans-serif" };
+    try {
+      const response = await fetch(`/api/chart/monthly?year=${selectedYear}`)
+      const data = await response.json();
+      if (myMonthlyCountChart) {
+        myMonthlyCountChart.destroy();
+        myMonthlyCountChart = null;
+      }
+      if (myMonthlyCostChart) {
+        myMonthlyCostChart.destroy();
+        myMonthlyCostChart = null;
+      }
+      if (!response.ok) {
+        wrap.hidden = true;
+        return;
+      }
+      const months = data.months || [];
+      const counts = months.map((m) => m.count || 0);
+      const costs = months.map((m) => m.cost || 0);
+      const totalCount = counts.reduce((a, b) => a + b, 0);
+      // データ0件の年は月別セクションごと非表示
+      if (totalCount === 0) {
+        wrap.hidden = true;
+        return;
+      }
+      wrap.hidden = false;
+
+      const ctxCount = document.getElementById('myMonthlyCountChart').getContext('2d');
+      const ctxCost = document.getElementById('myMonthlyCostChart').getContext('2d');
+      myMonthlyCountChart = new Chart(ctxCount, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '活動回数',
+            data: counts,
+            backgroundColor: '#E3A08D',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: legendFont, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${ctx.parsed.y}回` } }
+          },
+          scales: {
+            x: { ticks: { font: tickFont, color: '#5A5248' } },
+            y: { beginAtZero: true, ticks: { font: tickFont, color: '#5A5248', precision: 0 } }
+          }
+        }
+      });
+      myMonthlyCostChart = new Chart(ctxCost, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '費用(円)',
+            data: costs,
+            backgroundColor: '#A9C2A0',
+            borderRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: legendFont, color: '#5A5248', padding: 14, boxWidth: 12, usePointStyle: true } },
+            datalabels: { display: false },
+            tooltip: { callbacks: { label: (ctx) => `${(ctx.parsed.y || 0).toLocaleString()}円` } }
+          },
+          scales: {
+            x: { ticks: { font: tickFont, color: '#5A5248' } },
+            y: { beginAtZero: true, ticks: { font: tickFont, color: '#5A5248', callback: (value) => formatCostAxis(value) } }
+          }
+        }
+      });
+    } catch (error) {
+      console.error(error);
+      wrap.hidden = true;
+    }
+  }
+
   // 年・月どちらを変更しても再取得する
   const handleChange = () => {
     loadChart(year.value, month.value);
   }
   year.addEventListener('change', handleChange)
   month.addEventListener('change', handleChange)
-  // 年間サマリーは年の変更時のみ更新（月には依存しない）
-  year.addEventListener('change', () => loadYearly(year.value))
+  // 年間サマリー・月別棒グラフは年の変更時のみ更新（月には依存しない）
+  year.addEventListener('change', () => {
+    loadYearly(year.value);
+    loadMonthly(year.value);
+  })
 
   // 初期表示：サーバーで選択済みの今年・今月で自動取得する
   window.addEventListener('DOMContentLoaded', () => {
     loadChart(year.value, month.value);
     loadYearly(year.value);
+    loadMonthly(year.value);
   })
 </script>
