@@ -81,7 +81,7 @@ const parseTasks = (raw: unknown): MemoryTaskInput[] => {
     }
     // タスクは重複可のため件数が無制限になりやすい。大量INSERT防止に上限を設ける
     if (parsed.length > MAX_TASKS) {
-        throw new Error("INVALID_TASK_FORMAT");
+        throw new Error("INVALID_TASK_COUNT");
     }
     const tasks: MemoryTaskInput[] = [];
     for (const item of parsed) {
@@ -152,6 +152,9 @@ const handleTaskValidationError = (error: unknown, res: Response): boolean => {
     switch (error.message) {
         case "INVALID_TASK_FORMAT":
             res.status(400).json({ message: "準備TODOの形式が正しくありません" });
+            return true;
+        case "INVALID_TASK_COUNT":
+            res.status(400).json({ message: "準備TODOは100件までです" });
             return true;
         case "INVALID_TASK_NAME":
             res.status(400).json({ message: "準備TODOは1〜255文字で入力してください" });

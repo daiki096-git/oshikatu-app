@@ -153,6 +153,8 @@
       // モーダルで編集中の準備TODO（費用と同じくクライアント保持→保存時に一括送信）
       let tasks = [];
       const MAX_TASK_NAME_LENGTH = 255;
+      // サーバの MAX_TASKS と一致させる（超過保存を保存前に弾く）
+      const MAX_TASKS = 100;
 
       // ローカル日付を YYYY-MM-DD 文字列で取得（期限切れ判定の基準）
       function todayStr() {
@@ -280,6 +282,10 @@
         const name = input.value.trim();
         if (name === "") {
           alert("準備することを入力してください");
+          return;
+        }
+        if (tasks.length >= MAX_TASKS) {
+          alert("準備TODOは" + MAX_TASKS + "件までです");
           return;
         }
         if (name.length > MAX_TASK_NAME_LENGTH) {
